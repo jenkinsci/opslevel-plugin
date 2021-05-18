@@ -1,0 +1,18 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="WebHook URL" field="webHookUrl">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Send notification on start">
+        <f:checkbox name="onStart" value="true" checked="${instance.onStart}"/>
+    </f:entry>
+    <f:entry title="Send notification on success">
+        <f:checkbox name="onSuccess" value="true" checked="${instance.onSuccess}"/>
+    </f:entry>
+    <f:entry title="Send notification on failure">
+        <f:checkbox name="onFailure" value="true" checked="${instance.onFailure}"/>
+    </f:entry>
+    <f:entry title="Send notification on unstable">
+        <f:checkbox name="onUnstable" value="true" checked="${instance.onUnstable}"/>
+    </f:entry>
+</j:jelly>
