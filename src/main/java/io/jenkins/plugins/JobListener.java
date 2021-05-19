@@ -27,21 +27,6 @@ public class JobListener extends RunListener<AbstractBuild> {
     }
 
     @Override
-    public void onStarted(AbstractBuild build, TaskListener listener) {
-        WebHookPublisher publisher = GetWebHookPublisher(build);
-        if (publisher == null || !publisher.onStart) {
-            return;
-        }
-        String webHookUrl = publisher.webHookUrl;
-        String buildUrl = build.getAbsoluteUrl();
-        String projectName = build.getProject().getDisplayName();
-        String buildName = build.getDisplayName();
-        String buildVars = build.getBuildVariables().toString();
-        NotificationEvent event = new NotificationEvent(projectName, buildName, buildUrl, buildVars, "start");
-        httpPost(webHookUrl, event);
-    }
-
-    @Override
     public void onCompleted(AbstractBuild build, @Nonnull TaskListener listener) {
         WebHookPublisher publisher = GetWebHookPublisher(build);
         if (publisher == null) {
@@ -57,18 +42,8 @@ public class JobListener extends RunListener<AbstractBuild> {
         String buildName = build.getDisplayName();
         String buildVars = build.getBuildVariables().toString();
         NotificationEvent event = new NotificationEvent(projectName, buildName, buildUrl, buildVars, "");
-        if (publisher.onSuccess && result.equals(Result.SUCCESS)) {
-            event.event = "success";
-            httpPost(webHookUrl, event);
-        }
-        if (publisher.onFailure && result.equals(Result.FAILURE)) {
-            event.event = "failure";
-            httpPost(webHookUrl, event);
-        }
-        if (publisher.onUnstable && result.equals(Result.UNSTABLE)) {
-            event.event = "unstable";
-            httpPost(webHookUrl, event);
-        }
+        event.event = "TODO: real payload";
+        httpPost(webHookUrl, event);
     }
 
     private WebHookPublisher GetWebHookPublisher(AbstractBuild build) {
@@ -86,7 +61,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         Request request = new Request.Builder().url(url).post(body).build();
         try {
             Response response = client.newCall(request).execute();
-            log.debug("Invocation of webhook {} successful", url);
+            log.info("Invocation of webhook {} successful", url);
         } catch (Exception e) {
             log.info("Invocation of webhook {} failed", url, e);
         }

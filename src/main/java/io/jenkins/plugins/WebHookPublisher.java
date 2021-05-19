@@ -12,22 +12,23 @@ import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WebHookPublisher extends Notifier {
     public String webHookUrl;
-    public Boolean onStart;
-    public Boolean onSuccess;
-    public Boolean onFailure;
-    public Boolean onUnstable;
+    public String serviceName;
+    public String envName;
+
+    private static final Logger log = LoggerFactory.getLogger(JobListener.class);
 
     @DataBoundConstructor
-    public WebHookPublisher(String webHookUrl, boolean onStart, boolean onSuccess, boolean onFailure, boolean onUnstable) {
+    public WebHookPublisher(String webHookUrl, String serviceName, String envName) {
         super();
         this.webHookUrl = webHookUrl;
-        this.onStart = onStart;
-        this.onSuccess = onSuccess;
-        this.onFailure = onFailure;
-        this.onUnstable = onUnstable;
+        this.serviceName = serviceName;
+        this.envName = envName;
+        log.error("$$$$$$$$ {}, {}, {}", webHookUrl, serviceName, envName);
     }
 
     @Override
@@ -48,7 +49,6 @@ public class WebHookPublisher extends Notifier {
 
     @Extension
     public static class WebHookPublisherDescriptor extends BuildStepDescriptor<Publisher> {
-
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
@@ -56,8 +56,7 @@ public class WebHookPublisher extends Notifier {
 
         @Override
         public String getDisplayName() {
-            // return "OpsLevel Integration";
-            return "Outbound WebHook notification";
+            return "OpsLevel Integration";
         }
     }
 }
