@@ -12,7 +12,7 @@
     <f:entry title="Send notification on failure">
         <f:checkbox name="onFailure" value="true" checked="${instance.onFailure}"/>
     </f:entry>
-    <f:entry title="Send notification on unstable">
+    <f:entry title="Send notification whenever we feel like it">
         <f:checkbox name="onUnstable" value="true" checked="${instance.onUnstable}"/>
     </f:entry>
 </j:jelly>
