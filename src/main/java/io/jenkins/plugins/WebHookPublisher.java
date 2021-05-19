@@ -12,6 +12,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import java.io.IOException;
 
+
 public class WebHookPublisher extends Notifier {
     public String webHookUrl;
     public Boolean onStart;
@@ -55,7 +56,8 @@ public class WebHookPublisher extends Notifier {
 
         @Override
         public String getDisplayName() {
-            return "OpsLevel Integration";
+            // return "OpsLevel Integration";
+            return "Outbound WebHook notification";
         }
     }
 }
