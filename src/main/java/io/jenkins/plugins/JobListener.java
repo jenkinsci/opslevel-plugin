@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         }
 
         try {
-            JsonObject json = buildDeployPayload(publisher, build);
+            JsonObject json = buildDeployPayload(publisher, build, listener);
             // Send the payload
             String webHookUrl = publisher.webHookUrl;
             httpPost(webHookUrl, json);
@@ -66,7 +67,7 @@ public class JobListener extends RunListener<AbstractBuild> {
 
     private void httpPost(String url, JsonObject json) {
         String jsonString = json.toString();
-        log.info("Sending payload:\n{}", jsonString);
+        log.info("Sending OpsLevel Integration payload:\n{}", jsonString);
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, jsonString);
         Request request = new Request.Builder().url(url).post(body).build();
         try {
@@ -78,20 +79,20 @@ public class JobListener extends RunListener<AbstractBuild> {
         }
     }
 
-    private JsonObject buildDeployPayload(WebHookPublisher publisher, AbstractBuild build) throws InterruptedException, IOException {
+    private JsonObject buildDeployPayload(WebHookPublisher publisher, AbstractBuild build, TaskListener listener) throws InterruptedException, IOException {
         // Leaving a sample payload here for visibility while developing.
         // {
         //     "dedup_id": "9ae54794-dfc5-4ac8-b1b5-78789f20f3f8",
-        //     "service": "shopping_cart",
+        //     "service": "shopping_cart",                            // CAN OVERRIDE
         //     "deployer": {
-        //       "id": "1a9f841f-9a3d-4423-a05a-7e9c31a02b16",
-        //       "email": "mscott@example.com",
-        //       "name": "Michael Scott"
+        //       "id": "1a9f841f-9a3d-4423-a05a-7e9c31a02b16",        // CAN OVERRIDE
+        //       "email": "mscott@example.com",                       // CAN OVERRIDE
+        //       "name": "Michael Scott"                              // CAN OVERRIDE
         //     },
         //     "deployed_at": "'"$(date -u '+%FT%TZ')"'",
-        //     "environment": "Production",
-        //     "description": "Deployed by CI Pipeline: Deploy #234",
-        //     "deploy_url": "https://heroku.deploys.com",
+        //     "environment": "Production",                           // CAN OVERRIDE
+        //     "description": "Deployed by CI Pipeline: Deploy #234", // CAN OVERRIDE - needs var subs
+        //     "deploy_url": "https://heroku.deploys.com",            // CAN OVERRIDE - needs var subss
         //     "deploy_number": "234",
         //     "commit": {
         //       "sha": "38d02f1d7aab64678a7ad3eeb2ad2887ce7253f5",
@@ -105,8 +106,8 @@ public class JobListener extends RunListener<AbstractBuild> {
         //       "authoring_date": "'"$(date -u '+%FT%TZ')"'"
         //     }
 
-        EnvVars env = build.getEnvironment();
-        // XXX: Printing env variables
+        EnvVars env = build.getEnvironment(listener);
+        // TODO: remove debugging: Printing env variables
         if (env != null) {
             for (String key : env.keySet()) {
                 log.info(key + ": " + env.get(key));
@@ -146,15 +147,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         String deploy_url = getDeployUrl(build);
         String deploy_number = env.get("BUILD_NUMBER");
 
-        // TODO: fixup commit section - we don't currently have access to committer/author bits
-        // TODO: don't crash if these values are null
-        String commit_sha = env.get("GIT_COMMIT");
-        String commit_branch = env.get("GIT_BRANCH");
-
-
-        log.error("################################# {}, {}", commit_sha, commit_branch);
-        // Build the JSON string
-        JsonObject json = Json.createObjectBuilder()
+        JsonObjectBuilder json = Json.createObjectBuilder()
             .add("service", service)
             .add("deployer", Json.createObjectBuilder()
                 .add("email", deployer_email)
@@ -163,22 +156,38 @@ public class JobListener extends RunListener<AbstractBuild> {
             .add("environment", environment)
             .add("description", description)
             .add("deploy_url", deploy_url)
-            .add("deploy_number", deploy_number)
-            .add("commit", Json.createObjectBuilder()
-                .add("sha", commit_sha)
-                .add("branch", commit_branch))
-            .build();
+            .add("deploy_number", deploy_number);
 
-        return json;
+        JsonObject commitJson = getCommitPayloadSection(env);
+        if (commitJson != null) {
+            json.add("commit", commitJson);
+        }
+
+        return json.build();
     }
 
-
     private String getDeployUrl(AbstractBuild build) {
-        // Use Jenkins Location if set (on /jenkins/configure page). It's not set by default.
+        // Use Jenkins Location if set (on /configure page). It's not set by default.
         String absoluteUrl = build.getAbsoluteUrl();
         if (absoluteUrl != null) {
             return absoluteUrl;
         }
         return "http://jenkins-location-is-not-set.local/" + build.getUrl();
+    }
+
+    private JsonObject getCommitPayloadSection(EnvVars env) {
+        String commitHash = env.get("GIT_COMMIT");
+        if (commitHash == null) {
+            return null;
+        }
+        JsonObjectBuilder json = Json.createObjectBuilder();
+        json.add("sha", commitHash);
+
+        String commitBranch = env.get("GIT_BRANCH");
+        if (commitHash != null) {
+            json.add("branch", commitBranch);
+        }
+
+        return json.build();
     }
 }
