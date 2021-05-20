@@ -143,7 +143,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         // TODO: Add publisher.description override
         String description = "Jenkins Deploy #" + env.get("BUILD_NUMBER");
 
-        String deploy_url = getDeployUrl(build)
+        String deploy_url = getDeployUrl(build);
         String deploy_number = env.get("BUILD_NUMBER");
 
         // TODO: fixup commit section - we don't currently have access to committer/author bits
