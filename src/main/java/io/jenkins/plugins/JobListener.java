@@ -43,8 +43,6 @@ public class JobListener extends RunListener<AbstractBuild> {
             return;
         }
 
-        // Format the payload into a format OpsLevel can natively digest
-        // DeployPayload payload = formatDeployPayload(publisher, build);
         try {
             JsonObject json = buildDeployPayload(publisher, build);
             // Send the payload
@@ -145,21 +143,22 @@ public class JobListener extends RunListener<AbstractBuild> {
         // TODO: Add publisher.description override
         String description = "Jenkins Deploy #" + env.get("BUILD_NUMBER");
 
-        // TODO: This requires jenkins ROOT URL to be set! This is fragile and we should first check if it has been set.
-        String deploy_url = build.getAbsoluteUrl();
+        String deploy_url = getDeployUrl(build)
         String deploy_number = env.get("BUILD_NUMBER");
 
         // TODO: fixup commit section - we don't currently have access to committer/author bits
+        // TODO: don't crash if these values are null
         String commit_sha = env.get("GIT_COMMIT");
         String commit_branch = env.get("GIT_BRANCH");
 
 
+        log.error("################################# {}, {}", commit_sha, commit_branch);
         // Build the JSON string
         JsonObject json = Json.createObjectBuilder()
             .add("service", service)
             .add("deployer", Json.createObjectBuilder()
-                    .add("email", deployer_email)
-                    .add("name", deployer_name))
+                .add("email", deployer_email)
+                .add("name", deployer_name))
             .add("deployed_at", deployed_at)
             .add("environment", environment)
             .add("description", description)
@@ -171,5 +170,15 @@ public class JobListener extends RunListener<AbstractBuild> {
             .build();
 
         return json;
+    }
+
+
+    private String getDeployUrl(AbstractBuild build) {
+        // Use Jenkins Location if set (on /jenkins/configure page). It's not set by default.
+        String absoluteUrl = build.getAbsoluteUrl();
+        if (absoluteUrl != null) {
+            return absoluteUrl;
+        }
+        return "http://jenkins-location-is-not-set.local/" + build.getUrl();
     }
 }
