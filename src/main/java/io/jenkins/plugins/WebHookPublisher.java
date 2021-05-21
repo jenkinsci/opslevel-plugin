@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 public class WebHookPublisher extends Notifier {
     public String webHookUrl;
     public String serviceName;
-    public String envName;
+    public String environment;
     public String description;
     public String deployUrl;
     public String deployerId;
@@ -28,12 +28,12 @@ public class WebHookPublisher extends Notifier {
     private static final Logger log = LoggerFactory.getLogger(JobListener.class);
 
     @DataBoundConstructor
-    public WebHookPublisher(String webHookUrl, String serviceName, String envName, String description,
+    public WebHookPublisher(String webHookUrl, String serviceName, String environment, String description,
                             String deployUrl, String deployerId, String deployerEmail, String deployerName) {
         super();
         this.webHookUrl = cleanupValue(webHookUrl);
         this.serviceName = cleanupValue(serviceName);
-        this.envName = cleanupValue(envName);
+        this.environment = cleanupValue(environment);
         this.description = cleanupValue(description);
         this.deployUrl = cleanupValue(deployUrl);
         this.deployerId = cleanupValue(deployerId);

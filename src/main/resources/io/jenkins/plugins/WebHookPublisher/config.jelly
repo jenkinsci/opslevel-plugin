@@ -3,11 +3,11 @@
   <f:entry title="WebHook URL" field="webHookUrl">
     <f:textbox />
   </f:entry>
-  <f:advanced align="left">
-    <f:entry title="Service Name" field="serviceName" dewscription="Default: ${JOB_NAME}">
-      <f:textbox default="${%it.defaultServiceName}"/>
+  <f:advanced align="left" title="Override defaults">
+    <f:entry title="Service Name" field="serviceName">
+      <f:textbox/>
     </f:entry>
-    <f:entry title="Environment" field="envName">
+    <f:entry title="Environment" field="environment">
       <f:textbox/>
     </f:entry>
     <f:entry title="Description" field="description">

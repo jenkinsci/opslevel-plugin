@@ -17,6 +17,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.annotation.Nonnull;
 
+import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,48 +110,46 @@ public class JobListener extends RunListener<AbstractBuild> {
         EnvVars env = build.getEnvironment(listener);
 
         // TODO: remove debugging: Printing env variables
-        if (env != null) {
-            for (String key : env.keySet()) {
-                log.info(key + ": " + env.get(key));
-            }
+        for (String key : env.keySet()) {
+            log.info(key + ": " + env.get(key));
         }
 
         // Default to UUID. Perhaps allow this to be set with envVars ${JOB_NAME}_${BUILD_ID} / ${BUILD_TAG}
         String dedupId = UUID.randomUUID().toString();
 
-        // Couple possibilities for service name:
-        //   ${JOB_NAME}
-        //   based on GIT url -> https://github.com/repo/service_name
-        //   Could open opslevel.yml and get it directly
-        String service = env.get("JOB_NAME");
-        if(publisher.serviceName != null) {
-            service = publisher.serviceName;
+        // It didn't make sense to allow overriding deploy number. Use the value from Jenkin
+        String deployNumber = env.get("BUILD_NUMBER");
+
+        // URL of the asset that was just deployed
+        String deployUrl = stringSub(publisher.deployUrl, env);
+        if (deployUrl == null) {
+            deployUrl = getDeployUrl(build);
         }
 
         // ISO datetime with no milliseconds
         DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
         String deployedAt = ZonedDateTime.now().format(dtf);
 
+        // Description. Hopefully a useful default
+        String description = stringSub(publisher.description, env);
+        if (description == null) {
+            description = stringSub("Jenkins Deploy #${BUILD_NUMBER}", env);
+        }
+
         // Typically Test/Staging/Production
-        String environment = publisher.envName;
-        if (publisher.envName == null) {
+        String environment = stringSub(publisher.environment, env);
+        if (environment == null) {
             environment = "Production";
         }
 
-        // TODO: variable substitution in user-provided value
-        String description = publisher.description;
-        if (publisher.description == null) {
-            description = "Jenkins Deploy #" + env.get("BUILD_NUMBER");
+        // Couple possibilities for service name:
+        //   ${JOB_NAME}
+        //   based on GIT url -> https://github.com/repo/service_name
+        //   Could open opslevel.yml and get it directly (TODO: how to do this?)
+        String service = env.get("JOB_NAME");
+        if(publisher.serviceName != null) {
+            service = stringSub(publisher.serviceName, env);
         }
-
-        // URL of the asset that was just deployed. TODO: variable substitution
-        String deployUrl = publisher.deployUrl;
-        if (deployUrl == null) {
-            deployUrl = getDeployUrl(build);
-        }
-
-        // It didn't make sense to allow overriding deploy number. Use the value from Jenkin
-        String deployNumber = env.get("BUILD_NUMBER");
 
         // Details of who deployed, if available
         JsonObject deployerJson = buildDeployerJson(publisher, env);
@@ -178,6 +177,11 @@ public class JobListener extends RunListener<AbstractBuild> {
         return payload.build();
     }
 
+    private String stringSub(String templateString, EnvVars env) {
+        StringSubstitutor sub = new StringSubstitutor(env);
+        return sub.replace(templateString);
+    }
+
     private String getDeployUrl(AbstractBuild build) {
         // Use Jenkins Location if set (on /configure page). It's not set by default.
         String absoluteUrl = build.getAbsoluteUrl();
@@ -189,7 +193,7 @@ public class JobListener extends RunListener<AbstractBuild> {
 
     private JsonObject buildDeployerJson(WebHookPublisher publisher, EnvVars env) {
         JsonObjectBuilder deployer = Json.createObjectBuilder();
-        // TODO: Fixup deployer section. Unofortunately Git plugins don't seem to push the commiter info into env :(
+        // TODO: how to access details from the various GIT plugins and BitBucket plugin?
         String deployerId = publisher.deployerId;
         String deployerName = publisher.deployerName; // "jenkins";
         String deployerEmail = publisher.deployerEmail; // "jenkins@example.com";
@@ -199,15 +203,15 @@ public class JobListener extends RunListener<AbstractBuild> {
         }
 
         if (deployerId != null) {
-            deployer.add("id", deployerId);
+            deployer.add("id", stringSub(deployerId, env));
         }
 
         if (deployerName != null) {
-            deployer.add("name", deployerName);
+            deployer.add("name", stringSub(deployerName, env));
         }
 
         if (deployerEmail != null) {
-            deployer.add("email", deployerEmail);
+            deployer.add("email", stringSub(deployerEmail, env));
         }
 
         return deployer.build();
