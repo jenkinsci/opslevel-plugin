@@ -74,7 +74,10 @@ public class JobListener extends RunListener<AbstractBuild> {
         try {
             Response response = client.newCall(request).execute();
             log.info("Invocation of webhook {} successful", url);
-            log.info("Response: {}", response.body().string());
+            ResponseBody responseBody = response.body();
+            if (responseBody != null) {
+                log.info("Response: {}", responseBody.string());
+            }
         } catch (Exception e) {
             log.info("Invocation of webhook {} failed", url, e);
         }
@@ -186,6 +189,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         // Use Jenkins Location if set (on /configure page). It's not set by default.
         String absoluteUrl = build.getAbsoluteUrl();
         if (absoluteUrl != null) {
+            log.error("########################### {}", absoluteUrl);
             return absoluteUrl;
         }
         return "http://jenkins-location-is-not-set.local/" + build.getUrl();
@@ -226,7 +230,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         commit.add("sha", commitHash);
 
         String commitBranch = env.get("GIT_BRANCH");
-        if (commitHash != null) {
+        if (commitBranch != null) {
             commit.add("branch", commitBranch);
         }
 
