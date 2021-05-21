@@ -3,12 +3,27 @@
   <f:entry title="WebHook URL" field="webHookUrl">
     <f:textbox />
   </f:entry>
-  <f:section title="${%Overrides}">
-    <f:entry title="Service Name" field="serviceName">
-      <f:textbox/>
+  <f:advanced align="left">
+    <f:entry title="Service Name" field="serviceName" dewscription="Default: ${JOB_NAME}">
+      <f:textbox default="${%it.defaultServiceName}"/>
     </f:entry>
     <f:entry title="Environment" field="envName">
       <f:textbox/>
     </f:entry>
-  </f:section>
+    <f:entry title="Description" field="description">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="Deploy URL" field="deployUrl">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="Deployer ID" field="deployerId">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="Deployer Email" field="deployerEmail">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="Deployer Name" field="deployerName">
+      <f:textbox/>
+    </f:entry>
+  </f:advanced>
 </j:jelly>

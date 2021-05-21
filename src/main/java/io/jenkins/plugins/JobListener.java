@@ -107,6 +107,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         //     }
 
         EnvVars env = build.getEnvironment(listener);
+
         // TODO: remove debugging: Printing env variables
         if (env != null) {
             for (String key : env.keySet()) {
@@ -115,7 +116,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         }
 
         // Default to UUID. Perhaps allow this to be set with envVars ${JOB_NAME}_${BUILD_ID} / ${BUILD_TAG}
-        String dedup_id = UUID.randomUUID().toString();
+        String dedupId = UUID.randomUUID().toString();
 
         // Couple possibilities for service name:
         //   ${JOB_NAME}
@@ -126,44 +127,55 @@ public class JobListener extends RunListener<AbstractBuild> {
             service = publisher.serviceName;
         }
 
-        // TODO: Fixup deployer section. Unofortunately Git plugins don't seem to push the commiter info into env :(
-        String deployer_email = "jenkins@example.com";
-        String deployer_name= "jenkins";
-
-        // format datetime for deployed_at
+        // ISO datetime with no milliseconds
         DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
-        String deployed_at = ZonedDateTime.now().format(dtf);
+        String deployedAt = ZonedDateTime.now().format(dtf);
 
-        // environment: typically Test/Staging/Production
-        // TODO: explore what env variables we could pull this from
-        String environment = "Production";
-        if(publisher.envName != null) {
-            environment = publisher.envName;
+        // Typically Test/Staging/Production
+        String environment = publisher.envName;
+        if (publisher.envName == null) {
+            environment = "Production";
         }
 
-        // TODO: Add publisher.description override
-        String description = "Jenkins Deploy #" + env.get("BUILD_NUMBER");
+        // TODO: variable substitution in user-provided value
+        String description = publisher.description;
+        if (publisher.description == null) {
+            description = "Jenkins Deploy #" + env.get("BUILD_NUMBER");
+        }
 
-        String deploy_url = getDeployUrl(build);
-        String deploy_number = env.get("BUILD_NUMBER");
+        // URL of the asset that was just deployed. TODO: variable substitution
+        String deployUrl = publisher.deployUrl;
+        if (deployUrl == null) {
+            deployUrl = getDeployUrl(build);
+        }
 
-        JsonObjectBuilder json = Json.createObjectBuilder()
-            .add("service", service)
-            .add("deployer", Json.createObjectBuilder()
-                .add("email", deployer_email)
-                .add("name", deployer_name))
-            .add("deployed_at", deployed_at)
-            .add("environment", environment)
-            .add("description", description)
-            .add("deploy_url", deploy_url)
-            .add("deploy_number", deploy_number);
+        // It didn't make sense to allow overriding deploy number. Use the value from Jenkin
+        String deployNumber = env.get("BUILD_NUMBER");
 
-        JsonObject commitJson = getCommitPayloadSection(env);
+        // Details of who deployed, if available
+        JsonObject deployerJson = buildDeployerJson(publisher, env);
+
+        // Details of the commit, if available
+        JsonObject commitJson = buildCommitJson(env);
+
+        JsonObjectBuilder payload = Json.createObjectBuilder();
+        payload.add("dedup_id", dedupId);
+        payload.add("deploy_number", deployNumber);
+        payload.add("deploy_url", deployUrl);
+        payload.add("deployed_at", deployedAt);
+        payload.add("description", description);
+        payload.add("environment", environment);
+        payload.add("service", service);
+
+        if (deployerJson != null) {
+            payload.add("deployer", deployerJson);
+        }
+
         if (commitJson != null) {
-            json.add("commit", commitJson);
+            payload.add("commit", commitJson);
         }
 
-        return json.build();
+        return payload.build();
     }
 
     private String getDeployUrl(AbstractBuild build) {
@@ -175,19 +187,45 @@ public class JobListener extends RunListener<AbstractBuild> {
         return "http://jenkins-location-is-not-set.local/" + build.getUrl();
     }
 
-    private JsonObject getCommitPayloadSection(EnvVars env) {
+    private JsonObject buildDeployerJson(WebHookPublisher publisher, EnvVars env) {
+        JsonObjectBuilder deployer = Json.createObjectBuilder();
+        // TODO: Fixup deployer section. Unofortunately Git plugins don't seem to push the commiter info into env :(
+        String deployerId = publisher.deployerId;
+        String deployerName = publisher.deployerName; // "jenkins";
+        String deployerEmail = publisher.deployerEmail; // "jenkins@example.com";
+
+        if (deployerId == null && deployerName == null && deployerEmail == null) {
+            return null;
+        }
+
+        if (deployerId != null) {
+            deployer.add("id", deployerId);
+        }
+
+        if (deployerName != null) {
+            deployer.add("name", deployerName);
+        }
+
+        if (deployerEmail != null) {
+            deployer.add("email", deployerEmail);
+        }
+
+        return deployer.build();
+    }
+
+    private JsonObject buildCommitJson(EnvVars env) {
         String commitHash = env.get("GIT_COMMIT");
         if (commitHash == null) {
             return null;
         }
-        JsonObjectBuilder json = Json.createObjectBuilder();
-        json.add("sha", commitHash);
+        JsonObjectBuilder commit = Json.createObjectBuilder();
+        commit.add("sha", commitHash);
 
         String commitBranch = env.get("GIT_BRANCH");
         if (commitHash != null) {
-            json.add("branch", commitBranch);
+            commit.add("branch", commitBranch);
         }
 
-        return json.build();
+        return commit.build();
     }
 }

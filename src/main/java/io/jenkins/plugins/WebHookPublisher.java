@@ -19,16 +19,37 @@ public class WebHookPublisher extends Notifier {
     public String webHookUrl;
     public String serviceName;
     public String envName;
+    public String description;
+    public String deployUrl;
+    public String deployerId;
+    public String deployerEmail;
+    public String deployerName;
 
     private static final Logger log = LoggerFactory.getLogger(JobListener.class);
 
     @DataBoundConstructor
-    public WebHookPublisher(String webHookUrl, String serviceName, String envName) {
+    public WebHookPublisher(String webHookUrl, String serviceName, String envName, String description,
+                            String deployUrl, String deployerId, String deployerEmail, String deployerName) {
         super();
-        this.webHookUrl = webHookUrl;
-        this.serviceName = serviceName;
-        this.envName = envName;
-        log.error("$$$$$$$$ {}, {}, {}", webHookUrl, serviceName, envName);
+        this.webHookUrl = cleanupValue(webHookUrl);
+        this.serviceName = cleanupValue(serviceName);
+        this.envName = cleanupValue(envName);
+        this.description = cleanupValue(description);
+        this.deployUrl = cleanupValue(deployUrl);
+        this.deployerId = cleanupValue(deployerId);
+        this.deployerEmail = cleanupValue(deployerEmail);
+        this.deployerName = cleanupValue(deployerName);
+    }
+
+    private String cleanupValue(String someValue) {
+        log.error("DEALING WITH VALUE: \"{}\"", someValue);
+        if (someValue == null) {
+            return null;
+        }
+        if (someValue.trim().isEmpty()) {
+            return null;
+        }
+        return someValue.trim();
     }
 
     @Override
@@ -38,13 +59,18 @@ public class WebHookPublisher extends Notifier {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-            throws InterruptedException, IOException {
+    throws InterruptedException, IOException {
+        listener.getLogger().println("Running OpsLevel Integration plugin...");
         return true;
     }
 
     @Override
     public WebHookPublisherDescriptor getDescriptor() {
         return (WebHookPublisherDescriptor) super.getDescriptor();
+    }
+
+    public String getDefaultServiceName() {
+        return "from a function";
     }
 
     @Extension
