@@ -186,13 +186,16 @@ public class JobListener extends RunListener<AbstractBuild> {
     }
 
     private String getDeployUrl(AbstractBuild build) {
-        // Use Jenkins Location if set (on /configure page). It's not set by default.
-        String absoluteUrl = build.getAbsoluteUrl();
-        if (absoluteUrl != null) {
-            log.error("########################### {}", absoluteUrl);
-            return absoluteUrl;
+        try {
+            // Full URL, if Jenkins Location is set (on /configure page)
+            // By default the UI shows http://localhost:8080/jenkins/
+            // but the actual value is unset so this function throws an exception
+            return build.getAbsoluteUrl();
         }
-        return "http://jenkins-location-is-not-set.local/" + build.getUrl();
+        catch(java.lang.IllegalStateException e) {
+            // build.getUrl() always works but returns a relative path
+            return "http://jenkins-location-is-not-set.local/" + build.getUrl();
+        }
     }
 
     private JsonObject buildDeployerJson(WebHookPublisher publisher, EnvVars env) {
