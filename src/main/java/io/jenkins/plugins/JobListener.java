@@ -145,11 +145,8 @@ public class JobListener extends RunListener<AbstractBuild> {
             environment = "Production";
         }
 
-        // Couple possibilities for service name:
-        //   ${JOB_NAME}
-        //   based on GIT url -> https://github.com/repo/service_name
-        //   Could open opslevel.yml and get it directly (TODO: how to do this?)
-        String service = env.get("JOB_NAME");
+        // Confirm to kubernetes conventions with this prefix
+        String service = "jenkins:" + env.get("JOB_NAME");
         if(publisher.serviceAlias != null) {
             service = stringSub(publisher.serviceAlias, env);
         }
