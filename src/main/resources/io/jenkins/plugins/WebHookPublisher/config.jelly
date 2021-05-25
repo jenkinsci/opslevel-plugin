@@ -4,7 +4,7 @@
     <f:textbox />
   </f:entry>
   <f:advanced align="left" title="Override defaults">
-    <f:entry title="Service Alias" field="serviceName">
+    <f:entry title="Service Alias" field="serviceAlias">
       <f:textbox/>
     </f:entry>
     <f:entry title="Environment" field="environment">
