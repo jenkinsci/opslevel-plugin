@@ -153,8 +153,8 @@ public class JobListener extends RunListener<AbstractBuild> {
         //   based on GIT url -> https://github.com/repo/service_name
         //   Could open opslevel.yml and get it directly (TODO: how to do this?)
         String service = env.get("JOB_NAME");
-        if(publisher.serviceName != null) {
-            service = stringSub(publisher.serviceName, env);
+        if(publisher.serviceAlias != null) {
+            service = stringSub(publisher.serviceAlias, env);
         }
 
         // Details of who deployed, if available
