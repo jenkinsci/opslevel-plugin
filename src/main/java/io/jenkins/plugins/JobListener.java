@@ -8,15 +8,21 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import okhttp3.*;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.Executors;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.annotation.Nonnull;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,16 +236,60 @@ public class JobListener extends RunListener<AbstractBuild> {
     private JsonObject buildCommitJson(EnvVars env) {
         String commitHash = env.get("GIT_COMMIT");
         if (commitHash == null) {
+            // This project doesn't use git. Nothing to do
             return null;
         }
-        JsonObjectBuilder commit = Json.createObjectBuilder();
-        commit.add("sha", commitHash);
+        JsonObjectBuilder commitJson = Json.createObjectBuilder();
+        commitJson.add("sha", commitHash);
 
         String commitBranch = env.get("GIT_BRANCH");
         if (commitBranch != null) {
-            commit.add("branch", commitBranch);
+            commitJson.add("branch", commitBranch);
         }
 
-        return commit.build();
+        String commitMessage = getGitCommitMessage();
+        log.info("Commit message: {}", commitMessage);
+        if (commitMessage != null) {
+            commitJson.add("message", commitMessage);
+        }
+
+        return commitJson.build();
+    }
+
+    private String getGitCommitMessage() {
+//        String output = execCmd("git show --pretty=%s");
+        String output = execCmd("git", "show", "--pretty=%s");
+        String[] result = output.split(System.lineSeparator(), 2);
+        return result[0];
+    }
+
+
+    private static String execCmd(String cmd) {
+        try {
+            InputStream inputStream = Runtime.getRuntime().exec(cmd).getInputStream();
+            Scanner s = new Scanner(inputStream).useDelimiter("\\A");
+            return s.hasNext() ? s.next() : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static String execCmd(String... cmd) {
+        Process p = null;
+        try {
+            p = new ProcessBuilder(cmd).start();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        try {
+            String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+            String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
+            return stdout;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
