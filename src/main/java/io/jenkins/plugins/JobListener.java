@@ -209,15 +209,16 @@ public class JobListener extends RunListener<AbstractBuild> {
     }
 
     private JsonObject buildDeployerJson(WebHookPublisher publisher, EnvVars env) {
-        JsonObjectBuilder deployer = Json.createObjectBuilder();
-        // TODO: how to access details from the various GIT plugins and BitBucket plugin?
+        // TODO: how to access the user who triggered this build?
         String deployerId = publisher.deployerId;
-        String deployerName = publisher.deployerName; // "jenkins";
-        String deployerEmail = publisher.deployerEmail; // "jenkins@example.com";
+        String deployerName = publisher.deployerName;
+        String deployerEmail = publisher.deployerEmail;
 
         if (deployerId == null && deployerName == null && deployerEmail == null) {
             return null;
         }
+
+        JsonObjectBuilder deployer = Json.createObjectBuilder();
 
         if (deployerId != null) {
             deployer.add("id", stringSub(deployerId, env));
@@ -237,7 +238,7 @@ public class JobListener extends RunListener<AbstractBuild> {
     private JsonObject buildCommitJson(EnvVars env) {
         String commitHash = env.get("GIT_COMMIT");
         if (commitHash == null) {
-            // This project doesn't use git. Nothing to do
+            // This build doesn't use git
             return null;
         }
         JsonObjectBuilder commitJson = Json.createObjectBuilder();
@@ -257,23 +258,9 @@ public class JobListener extends RunListener<AbstractBuild> {
     }
 
     private String getGitCommitMessage(EnvVars env) {
-//        String output = execCmd("git show --pretty=%s");
-//        String output = execCmd("git", "show", "--pretty=%s");
         String output = execCmd(env, "git", "show", "--pretty=%s");
         String[] result = output.split(System.lineSeparator(), 2);
         return result[0];
-    }
-
-
-    private static String execCmd(String cmd) {
-        try {
-            InputStream inputStream = Runtime.getRuntime().exec(cmd).getInputStream();
-            Scanner s = new Scanner(inputStream).useDelimiter("\\A");
-            return s.hasNext() ? s.next() : null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     private static String execCmd(EnvVars env, String... cmd) {
@@ -286,8 +273,26 @@ public class JobListener extends RunListener<AbstractBuild> {
             e.printStackTrace();
             return null;
         }
+        int exitCode = 0;
         try {
-//            String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+            exitCode = p.waitFor();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        }
+        if (exitCode != 0) {
+            String stderr = null;
+            try {
+                stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+            String strCmd = String.join(" ", cmd);
+            log.warn("Failed to execute command: {}. Exit code: {}. Stderr:: {}", strCmd, exitCode, stderr);
+        }
+
+        try {
             String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
             return stdout;
         } catch (IOException e) {
