@@ -145,7 +145,7 @@ public class JobListener extends RunListener<AbstractBuild> {
             environment = "Production";
         }
 
-        // Confirm to kubernetes conventions with this prefix
+        // Conform to kubernetes conventions with this prefix
         String service = "jenkins:" + env.get("JOB_NAME");
         if(publisher.serviceAlias != null) {
             service = stringSub(publisher.serviceAlias, env);
