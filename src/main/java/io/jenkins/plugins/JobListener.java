@@ -11,6 +11,7 @@ import okhttp3.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Executors;
@@ -72,11 +73,40 @@ public class JobListener extends RunListener<AbstractBuild> {
         return null;
     }
 
-    private void httpPost(String url, JsonObject json) {
+    private void httpPost(String webHookUrl, JsonObject json) {
+        // Get the plugin version to pass through as a request parameter
+        final Properties properties = new Properties();
+        String version = "";
+        // Have to catch the potential IO Exception
+        try {
+            // TODO: In development this seems to pull from src/main/config.properties, instead of target/classes/properties
+            //       Once the plugin is compiled it will get the correct version string, but we could not figure out how
+            //       to get it looking at the right place in development
+            properties.load(getClass().getClassLoader().getResourceAsStream("config.properties"));
+            version = properties.getProperty("plugin.version");
+        }
+        catch (Exception e) {
+            log.error("Project properties does not exist. {}", e.toString());
+        }
+        String agent = "jenkins-" + version;
+
+        // Build the URL with query params
+        HttpUrl.Builder httpBuilder = HttpUrl.parse(webHookUrl).newBuilder();
+        HttpUrl url = httpBuilder
+            .addQueryParameter("agent", agent)
+            .build();
+
+        // Build the body
         String jsonString = json.toString();
         log.info("Sending OpsLevel Integration payload:\n{}", jsonString);
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, jsonString);
-        Request request = new Request.Builder().url(url).post(body).build();
+
+        // Finally, put the request together
+        Request request = new Request.Builder()
+            .url(url)
+            .post(body)
+            .build();
+
         try {
             Response response = client.newCall(request).execute();
             log.info("Invocation of webhook {} successful", url);
@@ -85,7 +115,7 @@ public class JobListener extends RunListener<AbstractBuild> {
                 log.info("Response: {}", responseBody.string());
             }
         } catch (Exception e) {
-            log.info("Invocation of webhook {} failed", url, e);
+            log.info("Invocation of webhook {} failed", url, e.toString());
         }
     }
 

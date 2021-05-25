@@ -21,6 +21,16 @@
     <name>Sergio's UI Plugin</name>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
 
+    <!-- Add resource filtering to pass build time variables to runtime -->
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+              </resource>
+        </resources>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>com.alibaba</groupId>

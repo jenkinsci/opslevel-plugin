@@ -30,7 +30,12 @@ Clone this repo, install Java & Maven, and run:
 ```
 That optional `env -i PATH=$PATH` removes all env vars except `PATH`. Handy if (like me) you aren't sure which are created by Jenkins.
 
+## Create plugin package
+To create a compliled/packaged plugin that you can import directly into jenkins:
+```
+    mvn package
+```
+
 ## LICENSE
 
 Licensed under MIT, see [LICENSE](LICENSE.md)
-
