@@ -45,14 +45,17 @@ public class JobListener extends RunListener<AbstractBuild> {
             return;
         }
 
-        try {
-            JsonObject json = buildDeployPayload(publisher, build, listener);
-            // Send the payload
-            String webHookUrl = publisher.webHookUrl;
-            httpPost(webHookUrl, json);
-        }
-        catch(Exception e) {
-            log.error("Error: {}. Could not publish deploy to OpsLevel", e.toString());
+        // Send the webhook on successful deploys. UNSTABLE could be sucessful depending on how the pipeline is set up
+        if (result.equals(Result.SUCCESS) || result.equals(Result.UNSTABLE)) {
+            try {
+                JsonObject json = buildDeployPayload(publisher, build, listener);
+                // Send the payload
+                String webHookUrl = publisher.webHookUrl;
+                httpPost(webHookUrl, json);
+            }
+            catch(Exception e) {
+                log.error("Error: {}. Could not publish deploy to OpsLevel", e.toString());
+            }
         }
 
     }
