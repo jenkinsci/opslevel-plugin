@@ -8,12 +8,9 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import okhttp3.*;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Executors;
@@ -142,12 +139,6 @@ public class JobListener extends RunListener<AbstractBuild> {
         DateTimeFormatter dtf = DateTimeFormatter.ISO_INSTANT;
         String deployedAt = ZonedDateTime.now().format(dtf);
 
-        // Description. Hopefully a useful default
-        String description = stringSub(publisher.description, env);
-        if (description == null) {
-            description = stringSub("Jenkins Deploy #${BUILD_NUMBER}", env);
-        }
-
         // Typically Test/Staging/Production
         String environment = stringSub(publisher.environment, env);
         if (environment == null) {
@@ -168,6 +159,16 @@ public class JobListener extends RunListener<AbstractBuild> {
 
         // Details of the commit, if available
         JsonObject commitJson = buildCommitJson(env);
+
+        // Description that is hopefully meaningful
+        String description = stringSub(publisher.description, env);
+        if (description == null) {
+            if (commitJson != null && commitJson.containsKey("message")) {
+                description = commitJson.getString("message");
+            } else {
+                description = stringSub("Jenkins Deploy #${BUILD_NUMBER}", env);
+            }
+        }
 
         JsonObjectBuilder payload = Json.createObjectBuilder();
         payload.add("dedup_id", dedupId);
@@ -247,8 +248,7 @@ public class JobListener extends RunListener<AbstractBuild> {
             commitJson.add("branch", commitBranch);
         }
 
-        String commitMessage = getGitCommitMessage();
-        log.info("Commit message: {}", commitMessage);
+        String commitMessage = getGitCommitMessage(env);
         if (commitMessage != null) {
             commitJson.add("message", commitMessage);
         }
@@ -256,9 +256,10 @@ public class JobListener extends RunListener<AbstractBuild> {
         return commitJson.build();
     }
 
-    private String getGitCommitMessage() {
+    private String getGitCommitMessage(EnvVars env) {
 //        String output = execCmd("git show --pretty=%s");
-        String output = execCmd("git", "show", "--pretty=%s");
+//        String output = execCmd("git", "show", "--pretty=%s");
+        String output = execCmd(env, "git", "show", "--pretty=%s");
         String[] result = output.split(System.lineSeparator(), 2);
         return result[0];
     }
@@ -275,16 +276,18 @@ public class JobListener extends RunListener<AbstractBuild> {
         }
     }
 
-    private static String execCmd(String... cmd) {
+    private static String execCmd(EnvVars env, String... cmd) {
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        pb.directory(new File(env.get("WORKSPACE")));
         Process p = null;
         try {
-            p = new ProcessBuilder(cmd).start();
+            p = pb.start();
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
         try {
-            String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+//            String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
             String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
             return stdout;
         } catch (IOException e) {
