@@ -115,7 +115,7 @@ public class JobListener extends RunListener<AbstractBuild> {
                 log.info("Response: {}", responseBody.string());
             }
         } catch (Exception e) {
-            log.info("Invocation of webhook {} failed", url, e.toString());
+            log.info("Invocation of webhook {} failed: {}", url, e.toString());
         }
     }
 
