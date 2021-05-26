@@ -44,21 +44,26 @@ public class JobListener extends RunListener<AbstractBuild> {
         if (publisher == null) {
             return;
         }
+
         Result result = build.getResult();
         if (result == null) {
             return;
         }
 
-        // Send the webhook on successful deploys. UNSTABLE could be sucessful depending on how the pipeline is set up
+        PrintStream buildConsole = listener.getLogger();
+
+        // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
         if (result.equals(Result.SUCCESS) || result.equals(Result.UNSTABLE)) {
             try {
-                JsonObject json = buildDeployPayload(publisher, build, listener);
-                // Send the payload
+                JsonObject payload = buildDeployPayload(publisher, build, listener);
                 String webHookUrl = publisher.webHookUrl;
-                httpPost(webHookUrl, json);
+                buildConsole.print("Publishing deploy to OpsLevel via: " + webHookUrl + "\n");
+                httpPost(webHookUrl, payload, buildConsole);
             }
             catch(Exception e) {
-                log.error("Error: {}. Could not publish deploy to OpsLevel", e.toString());
+                String message = e.toString() + ". Could not publish deploy to OpsLevel.\n";
+                log.error(message);
+                buildConsole.print("Error :" + message);
             }
         }
 
@@ -73,7 +78,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         return null;
     }
 
-    private void httpPost(String webHookUrl, JsonObject json) {
+    private void httpPost(String webHookUrl, JsonObject payload, PrintStream buildConsole) throws IOException {
         // Get the plugin version to pass through as a request parameter
         final Properties properties = new Properties();
         String version = "";
@@ -97,8 +102,9 @@ public class JobListener extends RunListener<AbstractBuild> {
             .build();
 
         // Build the body
-        String jsonString = json.toString();
+        String jsonString = payload.toString();
         log.info("Sending OpsLevel Integration payload:\n{}", jsonString);
+
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, jsonString);
 
         // Finally, put the request together
@@ -112,10 +118,13 @@ public class JobListener extends RunListener<AbstractBuild> {
             log.info("Invocation of webhook {} successful", url);
             ResponseBody responseBody = response.body();
             if (responseBody != null) {
-                log.info("Response: {}", responseBody.string());
+                String message = "Response: " + responseBody.string() + "\n";
+                buildConsole.print(message);
+                log.info(message);
             }
         } catch (Exception e) {
             log.info("Invocation of webhook {} failed: {}", url, e.toString());
+            throw e;
         }
     }
 
