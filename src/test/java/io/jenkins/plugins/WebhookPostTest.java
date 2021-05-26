@@ -1,61 +1,249 @@
 package io.jenkins.plugins;
 
-import hudson.FilePath;
-import hudson.model.Result;
-import org.apache.commons.io.FileUtils;
+import hudson.EnvVars;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
 import org.apache.commons.io.IOUtils;
-import org.hamcrest.CoreMatchers;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.ExtractResourceSCM;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import org.jvnet.hudson.test.JenkinsRule;
-import org.apache.commons.io.FileUtils;
 import hudson.model.*;
-import hudson.tasks.Shell;
-import org.junit.Test;
-import org.junit.Rule;
 import org.junit.Assert;
-
-import io.jenkins.plugins.JobListener;
+import okhttp3.mockwebserver.*;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import java.io.StringReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class WebhookPostTest {
     @Rule
-    public JenkinsRule j = new JenkinsRule();
+    public JenkinsRule jenkins = new JenkinsRule();
+
+    private static final Logger log = LoggerFactory.getLogger(JobListener.class);
+
+    MockWebServer server = new MockWebServer();
 
     @Test
-    public void first() throws Exception {
-        FreeStyleProject project = j.createFreeStyleProject();
-        project.getBuildersList().add(new Shell("echo hello"));
+    public void testSuccessSimpliestCase() throws Exception {
+        /*
+            Ensure our plugin behaves correctly with no git and no overrides - just a URL
+        */
+        server.start();
+        server.enqueue(new MockResponse().setBody("{\"result\": \"ok\"}"));
+        String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        project.getPublishersList().add(new WebHookPublisher(
+            webhookUrl,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ));
+
         FreeStyleBuild build = project.scheduleBuild2(0).get();
-        System.out.println(build.getDisplayName() + " completed");
-        // TODO: change this to use HtmlUnit
-        String logOutput = FileUtils.readFileToString(build.getLogFile());
-//        MatcherAssert.assertThat(s, contains("+ echo hello"));
-//        Assert.assertEquals(s, "+ echo hello");
-        Assert.assertThat(logOutput, containsString("hello"));
+        jenkins.assertBuildStatusSuccess(build);
+
+        // The build console is the output shown to the user in Jenkins' UI
+        String consoleOutput = IOUtils.toString(build.getLogText().readAll());
+        log.debug("Build console output:\n{}", consoleOutput);
+
+        assertThat(consoleOutput, containsString("Running OpsLevel Integration plugin..."));
+        assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
+        assertThat(consoleOutput, containsString("Response: {\"result\": \"ok\"}"));
+
+        RecordedRequest request = server.takeRequest();
+        String httpRequestUrl = request.toString();
+        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0-SNAPSHOT HTTP/1.1");
+
+        String requestBody = request.getBody().readUtf8();
+        JsonReader jsonReader = Json.createReader(new StringReader(requestBody));
+        JsonObject payload = jsonReader.readObject();
+        jsonReader.close();
+        log.debug("Post Body:\n{}", requestBody);
+
+        Assert.assertTrue(payload.containsKey("dedup_id"));
+        Assert.assertEquals(payload.getString("deploy_number"), "1");
+        assertThat (payload.getString("deploy_url"),  endsWith("/jenkins/job/test0/1/"));
+        Assert.assertTrue(payload.containsKey("deployed_at"));
+        Assert.assertEquals(payload.getString("description"), "Jenkins Deploy #1");
+        Assert.assertEquals(payload.getString("environment"), "Production");
+        Assert.assertEquals(payload.getString("service"), "jenkins:test0");
+
+        server.shutdown();
     }
 
-//    @Test
-//    public void testSomethingAtLest() throws Exception {
-//        WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "my-jenkins-build");
-//
-//        p.setDefinition(new CpsFlowDefinition("def hook = registerWebhook(token: \"test-token\")\necho \"token=${hook.token}\"\ndef data = waitForWebhook(webhookToken: hook)\necho \"${data}\""));
-//        JobListener jl = new JobListener();
-//        WorkflowRun r = p.scheduleBuild2(0).waitForStart();
-//
-//        j.assertBuildStatus(null, r);
-//
-//        j.postJSON("webhook-step/test-token", content);
-//
-//        j.waitForCompletion(r);
-//        j.assertBuildStatus(Result.SUCCESS, r);
-//        j.assertLogContains("token=test-token", r);
-//        j.assertLogContains("\"action\":\"done\"", r);
-//    }
+    @Test
+    public void testSuccessWithGit() throws Exception {
+        /*
+            Ensure our plugin behaves correctly for a build with git
+        */
+
+        server.start();
+        server.enqueue(new MockResponse().setBody("{\"result\": \"ok\"}"));
+        String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        project.getPublishersList().add(new WebHookPublisher(
+            webhookUrl,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ));
+
+        project.setScm(new ExtractResourceSCM(getClass().getResource("/project-with-git.zip")));
+        mockJenkinsEnvVar("GIT_COMMIT", "500ca67ed52a9ca20f3181e618347e61f86a0625");
+        mockJenkinsEnvVar("GIT_BRANCH", "origin/master");
+
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+        jenkins.assertBuildStatusSuccess(build);
+
+        // The build console is the output shown to the user in Jenkins' UI
+        String consoleOutput = IOUtils.toString(build.getLogText().readAll());
+        log.debug("Build console output:\n{}", consoleOutput);
+
+        assertThat(consoleOutput, containsString("Running OpsLevel Integration plugin..."));
+        assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
+        assertThat(consoleOutput, containsString("Response: {\"result\": \"ok\"}"));
+
+        RecordedRequest request = server.takeRequest();
+        String httpRequestUrl = request.toString();
+        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0-SNAPSHOT HTTP/1.1");
+
+        String requestBody = request.getBody().readUtf8();
+        JsonReader jsonReader = Json.createReader(new StringReader(requestBody));
+        JsonObject payload = jsonReader.readObject();
+        jsonReader.close();
+        log.debug("Post Body:\n{}", requestBody);
+
+        Assert.assertTrue(payload.containsKey("dedup_id"));
+        Assert.assertEquals(payload.getString("deploy_number"), "1");
+        assertThat (payload.getString("deploy_url"),  endsWith("/jenkins/job/test0/1/"));
+        Assert.assertTrue(payload.containsKey("deployed_at"));
+        Assert.assertEquals(payload.getString("description"), "Fix typo");
+        Assert.assertEquals(payload.getString("environment"), "Production");
+        Assert.assertEquals(payload.getString("service"), "jenkins:test0");
+        JsonObject commitJson = payload.getJsonObject("commit");
+        Assert.assertEquals(commitJson.getString("sha"), "500ca67ed52a9ca20f3181e618347e61f86a0625");
+        Assert.assertEquals(commitJson.getString("branch"), "origin/master");
+        Assert.assertEquals(commitJson.getString("message"), "Fix typo");
+
+        server.shutdown();
+    }
+
+    @Test
+    public void testSuccessWithGitAndOverrides() throws Exception {
+        /*
+            Ensure our plugin behaves correctly for a build with git and overrides
+        */
+
+        server.start();
+        server.enqueue(new MockResponse().setBody("{\"result\": \"ok\"}"));
+        String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        project.getPublishersList().add(new WebHookPublisher(
+                webhookUrl,
+                "the-lake-house-device",
+                "staging",
+                "Deploy to staging from Jenkins build #${BUILD_NUMBER}",
+                "http://staging.example.org/",
+                "Shlorpian-24601",
+                "yumyulack@example.org",
+                "Yumyulack"
+        ));
+
+        project.setScm(new ExtractResourceSCM(getClass().getResource("/project-with-git.zip")));
+        mockJenkinsEnvVar("GIT_COMMIT", "500ca67ed52a9ca20f3181e618347e61f86a0625");
+        mockJenkinsEnvVar("GIT_BRANCH", "origin/master");
+
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+        jenkins.assertBuildStatusSuccess(build);
+
+        // The build console is the output shown to the user in Jenkins' UI
+        String consoleOutput = IOUtils.toString(build.getLogText().readAll());
+        log.debug("Build console output:\n{}", consoleOutput);
+
+        assertThat(consoleOutput, containsString("Running OpsLevel Integration plugin..."));
+        assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
+        assertThat(consoleOutput, containsString("Response: {\"result\": \"ok\"}"));
+
+        RecordedRequest request = server.takeRequest();
+        String httpRequestUrl = request.toString();
+        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0-SNAPSHOT HTTP/1.1");
+
+        String requestBody = request.getBody().readUtf8();
+        JsonReader jsonReader = Json.createReader(new StringReader(requestBody));
+        JsonObject payload = jsonReader.readObject();
+        jsonReader.close();
+        log.debug("Post Body:\n{}", requestBody);
+
+        Assert.assertTrue(payload.containsKey("dedup_id"));
+        Assert.assertEquals(payload.getString("deploy_number"), "1");
+        Assert.assertEquals(payload.getString("deploy_url"),  "http://staging.example.org/");
+        Assert.assertTrue(payload.containsKey("deployed_at"));
+        Assert.assertEquals(payload.getString("description"), "Deploy to staging from Jenkins build #1");
+        Assert.assertEquals(payload.getString("environment"), "staging");
+        Assert.assertEquals(payload.getString("service"), "the-lake-house-device");
+        JsonObject commitJson = payload.getJsonObject("commit");
+        Assert.assertEquals(commitJson.getString("sha"), "500ca67ed52a9ca20f3181e618347e61f86a0625");
+        Assert.assertEquals(commitJson.getString("branch"), "origin/master");
+        Assert.assertEquals(commitJson.getString("message"), "Fix typo");
+
+        server.shutdown();
+    }
+
+    @Test
+    public void testShowsPostErrorInConsole() throws Exception {
+        /*
+            Ensure our plugin shows errors in the Jenkins build console
+        */
+
+        server.start();
+        server.enqueue(new MockResponse().setResponseCode(404).setBody("{\"error\":\"Example not found\"}"));
+        String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        project.getPublishersList().add(new WebHookPublisher(
+                webhookUrl,
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+        ));
+
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+        jenkins.assertBuildStatusSuccess(build);
+
+        // The build console is the output shown to the user in Jenkins' UI
+        String consoleOutput = IOUtils.toString(build.getLogText().readAll());
+        log.debug("Build console output:\n{}", consoleOutput);
+
+        assertThat(consoleOutput, containsString("Running OpsLevel Integration plugin..."));
+        assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
+        assertThat(consoleOutput, containsString("Response: {\"error\":\"Example not found\"}"));
+
+        server.shutdown();
+    }
+
+    private void mockJenkinsEnvVar(String name, String value) {
+        EnvironmentVariablesNodeProperty prop = new EnvironmentVariablesNodeProperty();
+        EnvVars envVars = prop.getEnvVars();
+        envVars.put(name, value);
+        jenkins.jenkins.getGlobalNodeProperties().add(prop);
+    }
+
 }
