@@ -1,6 +1,6 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:entry title="Webhook URL" field="webHookUrl">
+  <f:entry title="Deploy Webhook URL" field="webHookUrl">
     <f:textbox />
   </f:entry>
   <f:advanced align="left" title="Override defaults">

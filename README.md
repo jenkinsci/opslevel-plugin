@@ -1,26 +1,58 @@
-# jenkins-plugin-with-ui
+# OpsLevel plugin for Jenkins
 
-## Introduction
-
-TODO Describe what your plugin does here
+Provides Jenkins integration with OpsLevel. This allows you to notify OpsLevel when a deploy succeeds.
 
 ## Getting started
 
-TODO Tell users how to configure your plugin here, include screenshots, pipeline examples and
-configuration-as-code examples.
+1. Get an OpsLevel account <https://opslevel.com>
+2. Make sure you have a deploy endpoint set up, or create a new one <https://opslevel.com/integrations>
+3. Install this plugin on your Jenkins server:
+    1.  From the Jenkins homepage navigate to `Manage Jenkins`
+    2.  Navigate to `Manage Plugins`,
+    3.  Change the tab to `Available`,
+    4.  Search for `opslevel`,
+    5.  Check the box next to install.
 
-## Issues
 
-TODO Decide where you're going to host your issues, the default is Jenkins JIRA, but you can also enable GitHub issues,
-If you use GitHub issues there's no need for this section; else add the following line:
+### Pipelines
 
-Report issues and enhancements in the [Jenkins issue tracker](https://issues.jenkins-ci.org/).
+Not supported yet.
 
-## Contributing
+### Freestyle job
 
-TODO review the default [CONTRIBUTING](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md) file and make sure it is appropriate for your plugin, if not then add your own one adapted from the base file
+1. Navigate to your job
+2. Click 'Configure' in the left sidebar
+3. Add our post-build action 'Publish successful build to OpsLevel'
+4. Configure the 'Deploy WebHook URL'. You can find this URL in your OpsLevel Deploy Integration <https://opslevel.com/integrations>
 
-Refer to our [contribution guidelines](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md)
+![](/docs/opslevel_post_build_action.png)
+
+## Developer Instructions
+
+Refer to jenkins plugin guidelines: [contribution guidelines](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md)
+
+Install Maven and JDK.
+
+```shell
+$ mvn -version | grep -v home
+Apache Maven 3.8.1 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
+Java version: 15.0.2, vendor: N/A, runtime: /usr/local/Cellar/openjdk/15.0.2/libexec/openjdk.jdk/Contents/Home
+Default locale: en_CA, platform encoding: UTF-8
+OS name: "mac os x", version: "10.15.7", arch: "x86_64", family: "mac"
+```
+
+Run unit tests
+
+```shell
+mvn test
+```
+
+## Create plugin package
+Create an HPI file to install in Jenkins
+
+```shell
+mvn clean package
+```
 
 ## Running Locally
 
@@ -28,13 +60,7 @@ Clone this repo, install Java & Maven, and run:
 ```
     env -i PATH=$PATH mvn hpi:run
 ```
-That optional `env -i PATH=$PATH` removes all env vars except `PATH`. Handy if (like me) you aren't sure which are created by Jenkins.
-
-## Create plugin package
-To create a compliled/packaged plugin that you can import directly into jenkins:
-```
-    mvn package
-```
+That optional `env -i PATH=$PATH` removes all env vars except `PATH`.
 
 ## LICENSE
 
