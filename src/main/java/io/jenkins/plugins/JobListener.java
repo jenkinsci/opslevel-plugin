@@ -92,13 +92,18 @@ public class JobListener extends RunListener<AbstractBuild> {
         catch (Exception e) {
             log.error("Project properties does not exist. {}", e.toString());
         }
-        String agent = "jenkins-" + version;
 
-        // Build the URL with query params
-        HttpUrl.Builder httpBuilder = HttpUrl.parse(webHookUrl).newBuilder();
-        HttpUrl url = httpBuilder
-            .addQueryParameter("agent", agent)
-            .build();
+        if (webHookUrl == null) {
+            throw new InputMismatchException("Webhook URL is missing");
+        }
+        HttpUrl httpUrl = HttpUrl.parse(webHookUrl);
+        if (httpUrl == null) {
+            throw new InputMismatchException("Webhook URL is invalid");
+        }
+        HttpUrl.Builder httpBuilder = httpUrl.newBuilder();
+        // Append plugin version as query param for visibility
+        String agent = "jenkins-" + version;
+        HttpUrl url = httpBuilder.addQueryParameter("agent", agent).build();
 
         // Build the body
         String jsonString = payload.toString();
