@@ -66,7 +66,6 @@ public class JobListener extends RunListener<AbstractBuild> {
                 buildConsole.print("Error :" + message);
             }
         }
-
     }
 
     private WebHookPublisher GetWebHookPublisher(AbstractBuild build) {
@@ -103,7 +102,7 @@ public class JobListener extends RunListener<AbstractBuild> {
 
         // Build the body
         String jsonString = payload.toString();
-        log.info("Sending OpsLevel Integration payload:\n{}", jsonString);
+        log.debug("Sending OpsLevel Integration payload:\n{}", jsonString);
 
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, jsonString);
 
@@ -115,52 +114,21 @@ public class JobListener extends RunListener<AbstractBuild> {
 
         try {
             Response response = client.newCall(request).execute();
-            log.info("Invocation of webhook {} successful", url);
+            log.debug("Invocation of webhook {} successful", url);
             ResponseBody responseBody = response.body();
             if (responseBody != null) {
                 String message = "Response: " + responseBody.string() + "\n";
                 buildConsole.print(message);
-                log.info(message);
+                log.debug(message);
             }
         } catch (Exception e) {
-            log.info("Invocation of webhook {} failed: {}", url, e.toString());
+            log.warn("Invocation of webhook {} failed: {}", url, e.toString());
             throw e;
         }
     }
 
     private JsonObject buildDeployPayload(WebHookPublisher publisher, AbstractBuild build, TaskListener listener) throws InterruptedException, IOException {
-        // Leaving a sample payload here for visibility while developing.
-        // {
-        //     "dedup_id": "9ae54794-dfc5-4ac8-b1b5-78789f20f3f8",
-        //     "service": "shopping_cart",                            // CAN OVERRIDE
-        //     "deployer": {
-        //       "id": "1a9f841f-9a3d-4423-a05a-7e9c31a02b16",        // CAN OVERRIDE
-        //       "email": "mscott@example.com",                       // CAN OVERRIDE
-        //       "name": "Michael Scott"                              // CAN OVERRIDE
-        //     },
-        //     "deployed_at": "'"$(date -u '+%FT%TZ')"'",
-        //     "environment": "Production",                           // CAN OVERRIDE
-        //     "description": "Deployed by CI Pipeline: Deploy #234", // CAN OVERRIDE - needs var subs
-        //     "deploy_url": "https://heroku.deploys.com",            // CAN OVERRIDE - needs var subss
-        //     "deploy_number": "234",
-        //     "commit": {
-        //       "sha": "38d02f1d7aab64678a7ad3eeb2ad2887ce7253f5",
-        //       "message": "Merge branch 'fix-tax-rate' into 'master'",
-        //       "branch": "master",
-        //       "date": "'"$(date -u '+%FT%TZ')"'",
-        //       "committer_name": "Michael Scott",
-        //       "committer_email": "mscott@example.com",
-        //       "author_name": "Michael Scott",
-        //       "author_email": "mscott@example.com",
-        //       "authoring_date": "'"$(date -u '+%FT%TZ')"'"
-        //     }
-
         EnvVars env = build.getEnvironment(listener);
-
-        // TODO: remove debugging: Printing env variables
-        for (String key : env.keySet()) {
-            log.info(key + ": " + env.get(key));
-        }
 
         // Default to UUID. Perhaps allow this to be set with envVars ${JOB_NAME}_${BUILD_ID} / ${BUILD_TAG}
         String dedupId = UUID.randomUUID().toString();
@@ -245,7 +213,7 @@ public class JobListener extends RunListener<AbstractBuild> {
     }
 
     private JsonObject buildDeployerJson(WebHookPublisher publisher, EnvVars env) {
-        // TODO: how to access the user who triggered this build?
+        // TODO: how to access the Jenkins user who triggered this build?
         String deployerId = publisher.deployerId;
         String deployerName = publisher.deployerName;
         String deployerEmail = publisher.deployerEmail;

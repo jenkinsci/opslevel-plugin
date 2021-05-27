@@ -25,8 +25,6 @@ public class WebHookPublisher extends Notifier {
     public String deployerEmail;
     public String deployerName;
 
-    private static final Logger log = LoggerFactory.getLogger(JobListener.class);
-
     @DataBoundConstructor
     public WebHookPublisher(String webHookUrl, String serviceAlias, String environment, String description,
                             String deployUrl, String deployerId, String deployerEmail, String deployerName) {
@@ -42,7 +40,6 @@ public class WebHookPublisher extends Notifier {
     }
 
     private String cleanupValue(String someValue) {
-        log.error("DEALING WITH VALUE: \"{}\"", someValue);
         if (someValue == null) {
             return null;
         }
@@ -67,10 +64,6 @@ public class WebHookPublisher extends Notifier {
     @Override
     public WebHookPublisherDescriptor getDescriptor() {
         return (WebHookPublisherDescriptor) super.getDescriptor();
-    }
-
-    public String getDefaultserviceAlias() {
-        return "from a function";
     }
 
     @Extension

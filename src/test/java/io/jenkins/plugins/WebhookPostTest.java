@@ -63,7 +63,7 @@ public class WebhookPostTest {
 
         RecordedRequest request = server.takeRequest();
         String httpRequestUrl = request.toString();
-        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0-SNAPSHOT HTTP/1.1");
+        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0.0-SNAPSHOT HTTP/1.1");
 
         String requestBody = request.getBody().readUtf8();
         JsonReader jsonReader = Json.createReader(new StringReader(requestBody));
@@ -120,7 +120,7 @@ public class WebhookPostTest {
 
         RecordedRequest request = server.takeRequest();
         String httpRequestUrl = request.toString();
-        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0-SNAPSHOT HTTP/1.1");
+        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0.0-SNAPSHOT HTTP/1.1");
 
         String requestBody = request.getBody().readUtf8();
         JsonReader jsonReader = Json.createReader(new StringReader(requestBody));
@@ -181,7 +181,7 @@ public class WebhookPostTest {
 
         RecordedRequest request = server.takeRequest();
         String httpRequestUrl = request.toString();
-        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0-SNAPSHOT HTTP/1.1");
+        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0.0-SNAPSHOT HTTP/1.1");
 
         String requestBody = request.getBody().readUtf8();
         JsonReader jsonReader = Json.createReader(new StringReader(requestBody));
