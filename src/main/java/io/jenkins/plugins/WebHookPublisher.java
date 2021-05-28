@@ -75,7 +75,7 @@ public class WebHookPublisher extends Notifier {
 
         @Override
         public String getDisplayName() {
-            return "Publish succesful build to OpsLevel";
+            return "Publish successful build to OpsLevel";
         }
     }
 }
