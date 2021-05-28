@@ -6,20 +6,30 @@ import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-import okhttp3.*;
+import jenkins.model.Jenkins;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.Executors;
+import java.util.InputMismatchException;
+import java.util.Properties;
+import java.util.UUID;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.annotation.Nonnull;
 
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
@@ -38,34 +48,51 @@ public class JobListener extends RunListener<AbstractBuild> {
         client = new OkHttpClient();
     }
 
+    public void postSuccessfulDeployToOpsLevel(AbstractBuild build, @Nonnull TaskListener listener,
+                                               WebHookPublisher publisher) {
+        PrintStream buildConsole = listener.getLogger();
+        buildConsole.println("It's running now....");
+
+        try {
+            JsonObject payload = buildDeployPayload(publisher, build, listener);
+            String webHookUrl = publisher.webHookUrl;
+            buildConsole.print("Publishing deploy to OpsLevel via: " + webHookUrl + "\n");
+            httpPost(webHookUrl, payload, buildConsole);
+        }
+        catch(Exception e) {
+            String message = e.toString() + ". Could not publish deploy to OpsLevel.\n";
+            log.error(message);
+            buildConsole.print("Error :" + message);
+        }
+    }
+
     @Override
     public void onCompleted(AbstractBuild build, @Nonnull TaskListener listener) {
-        WebHookPublisher publisher = GetWebHookPublisher(build);
-        if (publisher == null) {
-            return;
-        }
+        PrintStream buildConsole = listener.getLogger();
+        buildConsole.println("Starting onCompleted...");
 
         Result result = build.getResult();
         if (result == null) {
+            buildConsole.println("Stopping: build has no result");
+            return;
+        }
+        // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
+        if (!result.equals(Result.SUCCESS) && !result.equals(Result.UNSTABLE) ) {
+            buildConsole.println("Stopping: build status is " + result.toString());
             return;
         }
 
-        PrintStream buildConsole = listener.getLogger();
-
-        // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
-        if (result.equals(Result.SUCCESS) || result.equals(Result.UNSTABLE)) {
-            try {
-                JsonObject payload = buildDeployPayload(publisher, build, listener);
-                String webHookUrl = publisher.webHookUrl;
-                buildConsole.print("Publishing deploy to OpsLevel via: " + webHookUrl + "\n");
-                httpPost(webHookUrl, payload, buildConsole);
-            }
-            catch(Exception e) {
-                String message = e.toString() + ". Could not publish deploy to OpsLevel.\n";
-                log.error(message);
-                buildConsole.print("Error :" + message);
-            }
+        WebHookPublisher publisher = GetWebHookPublisher(build);
+        if (publisher == null) {
+            buildConsole.println("Publisher not found on build. Checking global...");
         }
+        publisher = getPublisherFromGlobal();
+        if (publisher == null) {
+            buildConsole.println("Stopping: global publisher not configured");
+            return;
+        }
+
+        postSuccessfulDeployToOpsLevel(build, listener, publisher);
     }
 
     private WebHookPublisher GetWebHookPublisher(AbstractBuild build) {
@@ -75,6 +102,25 @@ public class JobListener extends RunListener<AbstractBuild> {
             }
         }
         return null;
+    }
+
+    private WebHookPublisher getPublisherFromGlobal() {
+        GlobalOpsLevelNotifier.DescriptorImpl descImpl = (GlobalOpsLevelNotifier.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(GlobalOpsLevelNotifier.class);
+        String webhookUrl = descImpl.getWebHookUrl();
+        if (webhookUrl == null || webhookUrl.trim().isEmpty()) {
+            return null;
+        }
+        WebHookPublisher publisher = new WebHookPublisher(
+                descImpl.getWebHookUrl(),
+                null,
+                descImpl.getEnvironment(),
+                descImpl.getDescription(),
+                null,
+                descImpl.getDeployerId(),
+                descImpl.getDeployerEmail(),
+                descImpl.getDeployerName()
+        );
+        return publisher;
     }
 
     private void httpPost(String webHookUrl, JsonObject payload, PrintStream buildConsole) throws IOException {

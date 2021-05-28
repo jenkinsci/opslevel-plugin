@@ -1,0 +1,27 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:section title="Global OpsLevel Integration">
+
+    <!-- TODO: explain settings can be overriden per-build -->
+
+    <f:entry title="Deploy Webhook URL" field="webHookUrl">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="Environment" field="environment">
+      <f:textbox default="${descriptor.defaultEnvironment}"/>
+    </f:entry>
+    <f:entry title="Description" field="description">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="Deployer ID" field="deployerId">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="Deployer Email" field="deployerEmail">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="Deployer Name" field="deployerName">
+      <f:textbox/>
+    </f:entry>
+  </f:section>
+</j:jelly>
