@@ -3,25 +3,35 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <f:section title="Global OpsLevel Integration">
 
-    <!-- TODO: explain settings can be overriden per-build -->
+    <p>
+      Notify OpsLevel of all successful builds.
+      <br />
+      Values can be overriden per-build by adding a post-build action (to freestyle builds).
+    </p>
+    <br />
 
     <f:entry title="Deploy Webhook URL" field="webHookUrl">
       <f:textbox/>
     </f:entry>
-    <f:entry title="Environment" field="environment">
-      <f:textbox default="${descriptor.defaultEnvironment}"/>
-    </f:entry>
-    <f:entry title="Description" field="description">
-      <f:textbox/>
-    </f:entry>
-    <f:entry title="Deployer ID" field="deployerId">
-      <f:textbox/>
-    </f:entry>
-    <f:entry title="Deployer Email" field="deployerEmail">
-      <f:textbox/>
-    </f:entry>
-    <f:entry title="Deployer Name" field="deployerName">
-      <f:textbox/>
-    </f:entry>
+
+      <f:advanced align="left" title="Override defaults">
+
+      <f:entry title="Environment" field="environment">
+        <f:textbox default="${descriptor.defaultEnvironment}"/>
+      </f:entry>
+      <f:entry title="Description" field="description">
+        <f:textbox/>
+      </f:entry>
+      <f:entry title="Deployer ID" field="deployerId">
+        <f:textbox/>
+      </f:entry>
+      <f:entry title="Deployer Email" field="deployerEmail">
+        <f:textbox/>
+      </f:entry>
+      <f:entry title="Deployer Name" field="deployerName">
+        <f:textbox/>
+      </f:entry>
+
+    </f:advanced>
   </f:section>
 </j:jelly>

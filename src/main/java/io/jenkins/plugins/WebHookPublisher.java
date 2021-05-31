@@ -11,11 +11,15 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import java.io.IOException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.kohsuke.stapler.DataBoundSetter;
+
 public class WebHookPublisher extends Notifier {
+
+    private static final Logger logger = LoggerFactory.getLogger(OpsLevelGlobalConfigUI.class.getName());
+
     public String webHookUrl;
     public String serviceAlias;
     public String environment;
@@ -46,6 +50,85 @@ public class WebHookPublisher extends Notifier {
         return someValue.trim();
     }
 
+    public OpsLevelConfig generateOpsLevelConfig() {
+        OpsLevelConfig config = new OpsLevelConfig();
+        config.webHookUrl = this.webHookUrl;
+        config.serviceAlias = this.serviceAlias;
+        config.environment = this.environment;
+        config.description = this.description;
+        config.deployUrl = this.deployUrl;
+        config.deployerId = this.deployerId;
+        config.deployerEmail = this.deployerEmail;
+        config.deployerName = this.deployerName;
+        return config;
+    }
+
+    public String getWebHookUrl() {
+        logger.warn("GETTING WEBHOOk <<<<<<<<<<<<<");
+        return this.webHookUrl;
+    }
+
+    @DataBoundSetter
+    public void setWebHookUrl(String webHookUrl) {
+        // TODO: setters may not be used? Confirm this
+        logger.warn("SETTING WEBHOOK <<<<<<<<<<<<<<<<<<<");
+        this.webHookUrl = webHookUrl;
+    }
+
+    public String getServiceAlias() {
+        return this.serviceAlias;
+    }
+
+    @DataBoundSetter
+    public void setServiceAlias(String serviceAlias) {
+        this.serviceAlias = serviceAlias;
+    }
+
+    public String getEnvironment() {
+        return this.environment;
+    }
+
+    @DataBoundSetter
+    public void setEnvironment(String environment) {
+        this.environment = environment;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    @DataBoundSetter
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDeployUrl() {
+        return this.deployUrl;
+    }
+
+    @DataBoundSetter
+    public void setDeployUrl(String deployUrl) {
+        this.deployUrl = deployUrl;
+    }
+
+    public String getDeployerId() {
+        return this.deployerId;
+    }
+
+    @DataBoundSetter
+    public void setDeployerId(String deployerId) {
+        this.deployerId = deployerId;
+    }
+
+    public String getDeployerEmail() {
+        return this.deployerEmail;
+    }
+
+    @DataBoundSetter
+    public void setDeployerEmail(String deployerEmail) {
+        this.deployerEmail = deployerEmail;
+    }
+
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
@@ -62,9 +145,9 @@ public class WebHookPublisher extends Notifier {
     public WebHookPublisherDescriptor getDescriptor() {
         return (WebHookPublisherDescriptor) super.getDescriptor();
     }
-
     @Extension
     public static class WebHookPublisherDescriptor extends BuildStepDescriptor<Publisher> {
+
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
@@ -72,7 +155,7 @@ public class WebHookPublisher extends Notifier {
 
         @Override
         public String getDisplayName() {
-            return "Publish successful build to OpsLevel";
+            return "Modify OpsLevel notifications for this build";
         }
     }
 }

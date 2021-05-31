@@ -6,7 +6,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-import jenkins.model.Jenkins;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,24 +46,6 @@ public class JobListener extends RunListener<AbstractBuild> {
         client = new OkHttpClient();
     }
 
-    public void postSuccessfulDeployToOpsLevel(AbstractBuild build, @Nonnull TaskListener listener,
-                                               WebHookPublisher publisher) {
-        PrintStream buildConsole = listener.getLogger();
-        buildConsole.println("It's running now....");
-
-        try {
-            JsonObject payload = buildDeployPayload(publisher, build, listener);
-            String webHookUrl = publisher.webHookUrl;
-            buildConsole.print("Publishing deploy to OpsLevel via: " + webHookUrl + "\n");
-            httpPost(webHookUrl, payload, buildConsole);
-        }
-        catch(Exception e) {
-            String message = e.toString() + ". Could not publish deploy to OpsLevel.\n";
-            log.error(message);
-            buildConsole.print("Error :" + message);
-        }
-    }
-
     @Override
     public void onCompleted(AbstractBuild build, @Nonnull TaskListener listener) {
         PrintStream buildConsole = listener.getLogger();
@@ -75,23 +56,50 @@ public class JobListener extends RunListener<AbstractBuild> {
             buildConsole.println("Stopping: build has no result");
             return;
         }
+
         // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
         if (!result.equals(Result.SUCCESS) && !result.equals(Result.UNSTABLE) ) {
             buildConsole.println("Stopping: build status is " + result.toString());
             return;
         }
 
+        OpsLevelConfig opsLevelConfig = null;
         WebHookPublisher publisher = GetWebHookPublisher(build);
         if (publisher == null) {
-            buildConsole.println("Publisher not found on build. Checking global...");
+            buildConsole.println("Publisher not found on this build.");
+            opsLevelConfig = new OpsLevelConfig();
+        } else {
+            opsLevelConfig = publisher.generateOpsLevelConfig();
         }
-        publisher = getPublisherFromGlobal();
-        if (publisher == null) {
-            buildConsole.println("Stopping: global publisher not configured");
+
+        OpsLevelConfig globalConfig = OpsLevelGlobalConfig.get();
+        if (opsLevelConfig.webHookUrl.isEmpty() && globalConfig.webHookUrl.isEmpty()) {
+            buildConsole.println("Stopping: Webhook URL not configured");
             return;
         }
 
-        postSuccessfulDeployToOpsLevel(build, listener, publisher);
+        opsLevelConfig.populateEmptyValuesFrom(globalConfig);
+
+        postSuccessfulDeployToOpsLevel(build, listener, opsLevelConfig);
+    }
+
+
+    public void postSuccessfulDeployToOpsLevel(AbstractBuild build, @Nonnull TaskListener listener,
+                                               OpsLevelConfig opsLevelConfig) {
+        PrintStream buildConsole = listener.getLogger();
+        buildConsole.println("It's running now....");
+
+        try {
+            JsonObject payload = buildDeployPayload(opsLevelConfig, build, listener);
+            String webHookUrl = opsLevelConfig.webHookUrl;
+            buildConsole.print("Publishing deploy to OpsLevel via: " + webHookUrl + "\n");
+            httpPost(webHookUrl, payload, buildConsole);
+        }
+        catch(Exception e) {
+            String message = e.toString() + ". Could not publish deploy to OpsLevel.\n";
+            log.error(message);
+            buildConsole.print("Error :" + message);
+        }
     }
 
     private WebHookPublisher GetWebHookPublisher(AbstractBuild build) {
@@ -101,25 +109,6 @@ public class JobListener extends RunListener<AbstractBuild> {
             }
         }
         return null;
-    }
-
-    private WebHookPublisher getPublisherFromGlobal() {
-        OpsLevelGlobalConfigUI.DescriptorImpl descImpl = (OpsLevelGlobalConfigUI.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(OpsLevelGlobalConfigUI.class);
-        String webhookUrl = descImpl.getWebHookUrl();
-        if (webhookUrl == null || webhookUrl.trim().isEmpty()) {
-            return null;
-        }
-        WebHookPublisher publisher = new WebHookPublisher(
-                descImpl.getWebHookUrl(),
-                null,
-                descImpl.getEnvironment(),
-                descImpl.getDescription(),
-                null,
-                descImpl.getDeployerId(),
-                descImpl.getDeployerEmail(),
-                descImpl.getDeployerName()
-        );
-        return publisher;
     }
 
     private void httpPost(String webHookUrl, JsonObject payload, PrintStream buildConsole) throws IOException {
@@ -152,7 +141,7 @@ public class JobListener extends RunListener<AbstractBuild> {
 
         // Build the body
         String jsonString = payload.toString();
-        log.debug("Sending OpsLevel Integration payload:\n{}", jsonString);
+        log.info("Sending OpsLevel Integration payload:\n{}", jsonString);
 
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, jsonString);
 
@@ -169,7 +158,7 @@ public class JobListener extends RunListener<AbstractBuild> {
             if (responseBody != null) {
                 String message = "Response: " + responseBody.string() + "\n";
                 buildConsole.print(message);
-                log.debug(message);
+                log.info(message);
             }
         } catch (Exception e) {
             log.warn("Invocation of webhook {} failed: {}", url, e.toString());
@@ -177,7 +166,8 @@ public class JobListener extends RunListener<AbstractBuild> {
         }
     }
 
-    private JsonObject buildDeployPayload(WebHookPublisher publisher, AbstractBuild build, TaskListener listener) throws InterruptedException, IOException {
+    private JsonObject buildDeployPayload(OpsLevelConfig opsLevelConfig, AbstractBuild build, TaskListener listener)
+    throws InterruptedException, IOException {
         EnvVars env = build.getEnvironment(listener);
 
         // Default to UUID. Perhaps allow this to be set with envVars ${JOB_NAME}_${BUILD_ID} / ${BUILD_TAG}
@@ -187,8 +177,8 @@ public class JobListener extends RunListener<AbstractBuild> {
         String deployNumber = env.get("BUILD_NUMBER");
 
         // URL of the asset that was just deployed
-        String deployUrl = stringSub(publisher.deployUrl, env);
-        if (deployUrl == null) {
+        String deployUrl = stringSub(opsLevelConfig.deployUrl, env);
+        if (deployUrl.isEmpty()) {
             deployUrl = getDeployUrl(build);
         }
 
@@ -197,26 +187,26 @@ public class JobListener extends RunListener<AbstractBuild> {
         String deployedAt = ZonedDateTime.now().format(dtf);
 
         // Typically Test/Staging/Production
-        String environment = stringSub(publisher.environment, env);
-        if (environment == null) {
+        String environment = stringSub(opsLevelConfig.environment, env);
+        if (environment.isEmpty()) {
             environment = "Production";
         }
 
         // Conform to kubernetes conventions with this prefix
-        String service = "jenkins:" + env.get("JOB_NAME");
-        if(publisher.serviceAlias != null) {
-            service = stringSub(publisher.serviceAlias, env);
+        String serviceAlias = stringSub(opsLevelConfig.serviceAlias, env);
+        if (serviceAlias.isEmpty()) {
+            serviceAlias = "jenkins:" + env.get("JOB_NAME");
         }
 
         // Details of who deployed, if available
-        JsonObject deployerJson = buildDeployerJson(publisher, env);
+        JsonObject deployerJson = buildDeployerJson(opsLevelConfig, env);
 
         // Details of the commit, if available
         JsonObject commitJson = buildCommitJson(env);
 
         // Description that is hopefully meaningful
-        String description = stringSub(publisher.description, env);
-        if (description == null) {
+        String description = stringSub(opsLevelConfig.description, env);
+        if (description.isEmpty()) {
             if (commitJson != null && commitJson.containsKey("message")) {
                 description = commitJson.getString("message");
             } else {
@@ -231,7 +221,7 @@ public class JobListener extends RunListener<AbstractBuild> {
         payload.add("deployed_at", deployedAt);
         payload.add("description", description);
         payload.add("environment", environment);
-        payload.add("service", service);
+        payload.add("service", serviceAlias);
 
         if (deployerJson != null) {
             payload.add("deployer", deployerJson);
@@ -262,27 +252,27 @@ public class JobListener extends RunListener<AbstractBuild> {
         }
     }
 
-    private JsonObject buildDeployerJson(WebHookPublisher publisher, EnvVars env) {
+    private JsonObject buildDeployerJson(OpsLevelConfig opsLevelConfig, EnvVars env) {
         // TODO: how to access the Jenkins user who triggered this build?
-        String deployerId = publisher.deployerId;
-        String deployerName = publisher.deployerName;
-        String deployerEmail = publisher.deployerEmail;
+        String deployerId = opsLevelConfig.deployerId;
+        String deployerName = opsLevelConfig.deployerName;
+        String deployerEmail = opsLevelConfig.deployerEmail;
 
-        if (deployerId == null && deployerName == null && deployerEmail == null) {
+        if (deployerId.isEmpty() && deployerName.isEmpty() && deployerEmail.isEmpty()) {
             return null;
         }
 
         JsonObjectBuilder deployer = Json.createObjectBuilder();
 
-        if (deployerId != null) {
+        if (!deployerId.isEmpty()) {
             deployer.add("id", stringSub(deployerId, env));
         }
 
-        if (deployerName != null) {
+        if (!deployerName.isEmpty()) {
             deployer.add("name", stringSub(deployerName, env));
         }
 
-        if (deployerEmail != null) {
+        if (!deployerEmail.isEmpty()) {
             deployer.add("email", stringSub(deployerEmail, env));
         }
 

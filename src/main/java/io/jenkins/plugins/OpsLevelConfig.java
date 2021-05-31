@@ -34,4 +34,33 @@ public class OpsLevelConfig {
                 ", deployerName='" + deployerName + '\'' +
                 '}';
     }
+
+    public void populateEmptyValuesFrom(OpsLevelConfig otherConfig) {
+        // Bring in values from another config, preferring to keep our own
+
+        if (this.webHookUrl.isEmpty()) {
+            this.webHookUrl = otherConfig.webHookUrl;
+        }
+        if (this.serviceAlias.isEmpty()) {
+            this.serviceAlias = otherConfig.serviceAlias;
+        }
+        if (this.environment.isEmpty()) {
+            this.environment = otherConfig.environment;
+        }
+        if (this.description.isEmpty()) {
+            this.description = otherConfig.description;
+        }
+        if (this.deployUrl.isEmpty()) {
+            this.deployUrl = otherConfig.deployUrl;
+        }
+        if (this.deployerId.isEmpty()) {
+            this.deployerId = otherConfig.deployerId;
+        }
+        if (this.deployerEmail.isEmpty()) {
+            this.deployerEmail = otherConfig.deployerEmail;
+        }
+        if (this.deployerName.isEmpty()) {
+            this.deployerName = otherConfig.deployerName;
+        }
+    }
 }
