@@ -1,10 +1,8 @@
 package io.jenkins.plugins;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Run;
-import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import hudson.Extension;
 import jenkins.model.Jenkins;
@@ -17,86 +15,80 @@ import java.util.logging.Logger;
 
 
 @Extension
-public class GlobalOpsLevelNotifier extends RunListener<Run<?, ?>> implements Describable<GlobalOpsLevelNotifier> {
+public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements Describable<OpsLevelGlobalConfigUI> {
 
-    private static final Logger logger = Logger.getLogger(GlobalOpsLevelNotifier.class.getName());
+    private static final Logger logger = Logger.getLogger(OpsLevelGlobalConfigUI.class.getName());
 
-    public Descriptor<GlobalOpsLevelNotifier> getDescriptor() {
+    public Descriptor<OpsLevelGlobalConfigUI> getDescriptor() {
         return getDescriptorImpl();
     }
 
     public DescriptorImpl getDescriptorImpl() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(GlobalOpsLevelNotifier.class);
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(OpsLevelGlobalConfigUI.class);
     }
 
-    @Extension @Symbol("GlobalOpsLevelNotifier")
-    public static final class DescriptorImpl extends Descriptor<GlobalOpsLevelNotifier> {
-        private String webHookUrl;
-        private String environment;
-        private String description;
-        private String deployerId;
-        private String deployerEmail;
-        private String deployerName;
+    @Extension @Symbol("OpsLevelGlobalNotifier")
+    public static final class DescriptorImpl extends Descriptor<OpsLevelGlobalConfigUI> {
+        private OpsLevelConfig globalConfig = OpsLevelGlobalConfig.get();
 
         public String getWebHookUrl() {
-            return webHookUrl;
+            return globalConfig.webHookUrl;
         }
 
         public String getEnvironment() {
-            return environment;
+            return globalConfig.environment;
         }
 
         public String getDescription() {
-            return description;
+            return globalConfig.description;
         }
 
         public String getDeployerId() {
-            return deployerId;
+            return globalConfig.deployerId;
         }
 
         public String getDeployerEmail() {
-            return deployerEmail;
+            return globalConfig.deployerEmail;
         }
 
         public String getDeployerName() {
-            return deployerName;
+            return globalConfig.deployerName;
         }
 
         @DataBoundSetter
         public void setWebHookUrl(String webHookUrl) {
-            this.webHookUrl = webHookUrl;
+            globalConfig.webHookUrl = webHookUrl;
         }
 
         @DataBoundSetter
         public void setEnvironment(String environment) {
-            this.environment = environment;
+            globalConfig.environment = environment;
         }
 
         @DataBoundSetter
         public void setDescription(String description) {
-            this.description = description;
+            globalConfig.description = description;
         }
 
         @DataBoundSetter
         public void setDeployerId(String deployerId) {
-            this.deployerId = deployerId;
+            globalConfig.deployerId = deployerId;
         }
 
         @DataBoundSetter
         public void setDeployerEmail(String deployerEmail) {
-            this.deployerEmail = deployerEmail;
+            globalConfig.deployerEmail = deployerEmail;
         }
 
         @DataBoundSetter
         public void setDeployerName(String deployerName) {
-            this.deployerName = deployerName;
+            globalConfig.deployerName = deployerName;
         }
 
         public DescriptorImpl() {
             try {
                 load();
             } catch(NullPointerException e) {
-
             }
         }
 

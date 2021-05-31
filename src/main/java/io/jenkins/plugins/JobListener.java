@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.InputMismatchException;
@@ -105,7 +104,7 @@ public class JobListener extends RunListener<AbstractBuild> {
     }
 
     private WebHookPublisher getPublisherFromGlobal() {
-        GlobalOpsLevelNotifier.DescriptorImpl descImpl = (GlobalOpsLevelNotifier.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(GlobalOpsLevelNotifier.class);
+        OpsLevelGlobalConfigUI.DescriptorImpl descImpl = (OpsLevelGlobalConfigUI.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(OpsLevelGlobalConfigUI.class);
         String webhookUrl = descImpl.getWebHookUrl();
         if (webhookUrl == null || webhookUrl.trim().isEmpty()) {
             return null;

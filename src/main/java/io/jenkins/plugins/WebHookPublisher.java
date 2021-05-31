@@ -41,10 +41,7 @@ public class WebHookPublisher extends Notifier {
 
     private String cleanupValue(String someValue) {
         if (someValue == null) {
-            return null;
-        }
-        if (someValue.trim().isEmpty()) {
-            return null;
+            return "";
         }
         return someValue.trim();
     }
