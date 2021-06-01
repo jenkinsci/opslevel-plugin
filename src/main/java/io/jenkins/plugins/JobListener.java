@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class JobListener extends RunListener<AbstractBuild> {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
-    private OkHttpClient client;
+    private final OkHttpClient client;
 
     private static final Logger log = LoggerFactory.getLogger(JobListener.class);
 
@@ -63,7 +63,7 @@ public class JobListener extends RunListener<AbstractBuild> {
             return;
         }
 
-        OpsLevelConfig opsLevelConfig = null;
+        OpsLevelConfig opsLevelConfig;
         WebHookPublisher publisher = GetWebHookPublisher(build);
         if (publisher == null) {
             buildConsole.println("Publisher not found on this build.");
@@ -153,15 +153,15 @@ public class JobListener extends RunListener<AbstractBuild> {
 
         try {
             Response response = client.newCall(request).execute();
-            log.debug("Invocation of webhook {} successful", url);
+            log.debug("Invocation of OpsLevel webhook {} successful", url);
             ResponseBody responseBody = response.body();
             if (responseBody != null) {
-                String message = "Response: " + responseBody.string() + "\n";
+                String message = "OpsLevel Response: " + responseBody.string() + "\n";
                 buildConsole.print(message);
                 log.info(message);
             }
         } catch (Exception e) {
-            log.warn("Invocation of webhook {} failed: {}", url, e.toString());
+            log.warn("Invocation of OpsLevel webhook {} failed: {}", url, e.toString());
             throw e;
         }
     }
@@ -303,6 +303,9 @@ public class JobListener extends RunListener<AbstractBuild> {
 
     private String getGitCommitMessage(EnvVars env) {
         String output = execCmd(env, "git", "show", "--pretty=%s");
+        if (output == null) {
+            return null;
+        }
         String[] result = output.split(System.lineSeparator(), 2);
         return result[0];
     }
