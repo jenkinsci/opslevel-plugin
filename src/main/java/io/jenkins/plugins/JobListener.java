@@ -3,6 +3,7 @@ package io.jenkins.plugins;
 import hudson.Extension;
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
+import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
@@ -72,13 +73,17 @@ public class JobListener extends RunListener<AbstractBuild> {
             opsLevelConfig = publisher.generateOpsLevelConfig();
         }
 
-        OpsLevelConfig globalConfig = OpsLevelGlobalConfig.get();
-        if (opsLevelConfig.webHookUrl.isEmpty() && globalConfig.webHookUrl.isEmpty()) {
+        OpsLevelConfig globalConfig = new OpsLevelGlobalConfigUI.DescriptorImpl().generateOpsLevelConfig();
+
+        log.error("#########  FROM UI  #########\n{}", globalConfig.toString());
+        log.error("#####################\n{}", opsLevelConfig.toString());
+        opsLevelConfig.populateEmptyValuesFrom(globalConfig);
+        log.error("###  MERGE  ###\n{}", opsLevelConfig.toString());
+
+        if (opsLevelConfig.webHookUrl.isEmpty()) {
             buildConsole.println("Stopping: Webhook URL not configured");
             return;
         }
-
-        opsLevelConfig.populateEmptyValuesFrom(globalConfig);
 
         postSuccessfulDeployToOpsLevel(build, listener, opsLevelConfig);
     }

@@ -10,14 +10,14 @@
     </p>
     <br />
 
-    <f:entry title="Deploy Webhook URL" field="webHookUrl">
+    <f:entry title="Deploy Webhook URL" field="webHookUrlGlobal">
       <f:textbox/>
     </f:entry>
 
       <f:advanced align="left" title="Override defaults">
 
       <f:entry title="Environment" field="environment">
-        <f:textbox default="${descriptor.defaultEnvironment}"/>
+        <f:textbox/>
       </f:entry>
       <f:entry title="Description" field="description">
         <f:textbox/>

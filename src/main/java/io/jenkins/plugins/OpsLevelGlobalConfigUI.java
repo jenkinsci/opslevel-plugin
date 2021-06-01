@@ -2,8 +2,6 @@ package io.jenkins.plugins;
 
 import hudson.model.Describable;
 import hudson.model.Descriptor;
-import hudson.model.Run;
-import hudson.model.listeners.RunListener;
 import hudson.Extension;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -15,7 +13,7 @@ import java.util.logging.Logger;
 
 
 @Extension
-public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements Describable<OpsLevelGlobalConfigUI> {
+public class OpsLevelGlobalConfigUI implements Describable<OpsLevelGlobalConfigUI> {
 
     private static final Logger logger = Logger.getLogger(OpsLevelGlobalConfigUI.class.getName());
 
@@ -28,72 +26,95 @@ public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements De
     }
 
     @Extension @Symbol("OpsLevelGlobalNotifier")
-    public static final class DescriptorImpl extends Descriptor<OpsLevelGlobalConfigUI> {
-        private OpsLevelConfig globalConfig = OpsLevelGlobalConfig.get();
+    public static class DescriptorImpl extends Descriptor<OpsLevelGlobalConfigUI> {
 
-        public String getWebHookUrl() {
-            return globalConfig.webHookUrl;
-        }
-
-        public String getEnvironment() {
-            return globalConfig.environment;
-        }
-
-        public String getDescription() {
-            return globalConfig.description;
-        }
-
-        public String getDeployerId() {
-            return globalConfig.deployerId;
-        }
-
-        public String getDeployerEmail() {
-            return globalConfig.deployerEmail;
-        }
-
-        public String getDeployerName() {
-            return globalConfig.deployerName;
-        }
-
-        @DataBoundSetter
-        public void setWebHookUrl(String webHookUrl) {
-            globalConfig.webHookUrl = webHookUrl;
-        }
-
-        @DataBoundSetter
-        public void setEnvironment(String environment) {
-            globalConfig.environment = environment;
-        }
-
-        @DataBoundSetter
-        public void setDescription(String description) {
-            globalConfig.description = description;
-        }
-
-        @DataBoundSetter
-        public void setDeployerId(String deployerId) {
-            globalConfig.deployerId = deployerId;
-        }
-
-        @DataBoundSetter
-        public void setDeployerEmail(String deployerEmail) {
-            globalConfig.deployerEmail = deployerEmail;
-        }
-
-        @DataBoundSetter
-        public void setDeployerName(String deployerName) {
-            globalConfig.deployerName = deployerName;
-        }
+//        public static final OpsLevelConfig globalConfig = OpsLevelGlobalConfig.get();
+        public static String webHookUrlGlobal = "";
+        public static String environment = "";
+        public static String description = "";
+        public static String deployerId = "";
+        public static String deployerEmail = "";
+        public static String deployerName = "";
 
         public DescriptorImpl() {
             try {
                 load();
             } catch(NullPointerException e) {
+                e.printStackTrace();
+                logger.warning("^^^ Failed to load() ^^^");
             }
         }
 
-        public String getDefaultEnvironment() {
-            return "Prod Buddy";
+        public static String getWebHookUrlGlobal() {
+            return webHookUrlGlobal;
+        }
+
+        public static String getEnvironment() {
+            return environment;
+        }
+
+        public static String getDescription() {
+            return description;
+        }
+
+        public static String getDeployerId() {
+            return deployerId;
+        }
+
+        public static String getDeployerEmail() {
+            return deployerEmail;
+        }
+
+        public static String getDeployerName() {
+            return deployerName;
+        }
+
+        @DataBoundSetter
+        public void setWebHookUrlGlobal(String webHookUrl) {
+            this.webHookUrlGlobal = webHookUrl;
+            // save();
+        }
+
+        @DataBoundSetter
+        public void setEnvironment(String environment) {
+            this.environment = environment;
+            // save();
+        }
+
+        @DataBoundSetter
+        public void setDescription(String description) {
+            this.description = description;
+            // save();
+        }
+
+        @DataBoundSetter
+        public void setDeployerId(String deployerId) {
+            this.deployerId = deployerId;
+            // save();
+        }
+
+        @DataBoundSetter
+        public void setDeployerEmail(String deployerEmail) {
+            this.deployerEmail = deployerEmail;
+            // save();
+        }
+
+        @DataBoundSetter
+        public void setDeployerName(String deployerName) {
+            this.deployerName = deployerName;
+            // save();
+        }
+
+        public OpsLevelConfig generateOpsLevelConfig() {
+            load();
+            OpsLevelConfig config = new OpsLevelConfig();
+            config.webHookUrl = webHookUrlGlobal;
+            config.environment = environment;
+            config.description = description;
+            config.deployerId = deployerId;
+            config.deployerEmail = deployerEmail;
+            config.deployerName = deployerName;
+            return config;
         }
 
         public String getDisplayName() {
@@ -106,6 +127,7 @@ public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements De
             save();
             return true;
         }
+
 
     }
 }
