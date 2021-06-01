@@ -2,7 +2,7 @@ package io.jenkins.plugins;
 
 import hudson.Extension;
 import hudson.EnvVars;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Extension
-public class OpsLevelJobListener extends RunListener<AbstractBuild> {
+public class OpsLevelJobListener extends RunListener<Run<?, ?>> {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private final OkHttpClient client;
@@ -43,30 +43,30 @@ public class OpsLevelJobListener extends RunListener<AbstractBuild> {
     private static final Logger log = LoggerFactory.getLogger(OpsLevelJobListener.class);
 
     public OpsLevelJobListener() {
-        super(AbstractBuild.class);
+        super();
         client = new OkHttpClient();
     }
 
     @Override
-    public void onCompleted(AbstractBuild build, @Nonnull TaskListener listener) {
+    public void onCompleted(Run run, @Nonnull TaskListener listener) {
         PrintStream buildConsole = listener.getLogger();
 
-        Result result = build.getResult();
+        Result result = run.getResult();
         if (result == null) {
-            log.debug("OpsLevel notifier: stop because build has no result");
+            log.debug("OpsLevel notifier: stop because run has no result");
             return;
         }
 
         // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
         if (!result.equals(Result.SUCCESS) && !result.equals(Result.UNSTABLE) ) {
-            log.debug("OpsLevel notifier: stop because build status is " + result.toString());
+            log.debug("OpsLevel notifier: stop because run status is " + result.toString());
             return;
         }
 
         OpsLevelConfig opsLevelConfig;
-        OpsLevelFreestylePostBuildAction publisher = GetWebHookPublisher(build);
+        OpsLevelFreestylePostBuildAction publisher = GetWebHookPublisher(run);
         if (publisher == null) {
-             log.debug("OpsLevel notifier: publisher not found on this build");
+             log.debug("OpsLevel notifier: publisher not found on this run");
             opsLevelConfig = new OpsLevelConfig();
         } else {
             opsLevelConfig = publisher.generateOpsLevelConfig();
@@ -80,16 +80,16 @@ public class OpsLevelJobListener extends RunListener<AbstractBuild> {
 
         opsLevelConfig.populateEmptyValuesFrom(globalConfig);
 
-        postSuccessfulDeployToOpsLevel(build, listener, opsLevelConfig);
+        postSuccessfulDeployToOpsLevel(run, listener, opsLevelConfig);
     }
 
 
-    public void postSuccessfulDeployToOpsLevel(AbstractBuild build, @Nonnull TaskListener listener,
+    public void postSuccessfulDeployToOpsLevel(Run run, @Nonnull TaskListener listener,
                                                OpsLevelConfig opsLevelConfig) {
         PrintStream buildConsole = listener.getLogger();
 
         try {
-            JsonObject payload = buildDeployPayload(opsLevelConfig, build, listener);
+            JsonObject payload = buildDeployPayload(opsLevelConfig, run, listener);
             String webHookUrl = opsLevelConfig.webHookUrl;
             buildConsole.print("Publishing deploy to OpsLevel via: " + webHookUrl + "\n");
             httpPost(webHookUrl, payload, buildConsole);
@@ -101,11 +101,12 @@ public class OpsLevelJobListener extends RunListener<AbstractBuild> {
         }
     }
 
-    private OpsLevelFreestylePostBuildAction GetWebHookPublisher(AbstractBuild build) {
-        for (Object publisher : build.getProject().getPublishersList().toMap().values()) {
-            if (publisher instanceof OpsLevelFreestylePostBuildAction) {
-                return (OpsLevelFreestylePostBuildAction) publisher;
-            }
+    private OpsLevelFreestylePostBuildAction GetWebHookPublisher(Run run) {
+        for (Object publisher : run.getAllActions()) {
+            log.warn(publisher.toString());
+            // if (publisher instanceof OpsLevelFreestylePostBuildAction) {
+            //     return (OpsLevelFreestylePostBuildAction) publisher;
+            // }
         }
         return null;
     }
@@ -164,9 +165,9 @@ public class OpsLevelJobListener extends RunListener<AbstractBuild> {
         }
     }
 
-    private JsonObject buildDeployPayload(OpsLevelConfig opsLevelConfig, AbstractBuild build, TaskListener listener)
+    private JsonObject buildDeployPayload(OpsLevelConfig opsLevelConfig, Run run, TaskListener listener)
     throws InterruptedException, IOException {
-        EnvVars env = build.getEnvironment(listener);
+        EnvVars env = run.getEnvironment(listener);
 
         // Default to UUID. Perhaps allow this to be set with envVars ${JOB_NAME}_${BUILD_ID} / ${BUILD_TAG}
         String dedupId = UUID.randomUUID().toString();
@@ -177,7 +178,7 @@ public class OpsLevelJobListener extends RunListener<AbstractBuild> {
         // URL of the asset that was just deployed
         String deployUrl = stringSub(opsLevelConfig.deployUrl, env);
         if (deployUrl.isEmpty()) {
-            deployUrl = getDeployUrl(build);
+            deployUrl = getDeployUrl(run);
         }
 
         // ISO datetime with no milliseconds
@@ -237,16 +238,16 @@ public class OpsLevelJobListener extends RunListener<AbstractBuild> {
         return sub.replace(templateString);
     }
 
-    private String getDeployUrl(AbstractBuild build) {
+    private String getDeployUrl(Run run) {
         try {
             // Full URL, if Jenkins Location is set (on /configure page)
             // By default the UI shows http://localhost:8080/jenkins/
             // but the actual value is unset so this function throws an exception
-            return build.getAbsoluteUrl();
+            return run.getAbsoluteUrl();
         }
         catch(java.lang.IllegalStateException e) {
-            // build.getUrl() always works but returns a relative path
-            return "http://jenkins-location-is-not-set.local/" + build.getUrl();
+            // run.getUrl() always works but returns a relative path
+            return "http://jenkins-location-is-not-set.local/" + run.getUrl();
         }
     }
 

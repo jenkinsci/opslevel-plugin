@@ -137,12 +137,12 @@ public class OpsLevelFreestylePostBuildAction extends Notifier {
         return BuildStepMonitor.NONE;
     }
 
-//    @Override
-//    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-//    throws InterruptedException, IOException {
-//        listener.getLogger().println("Running OpsLevel Integration plugin...");
-//        return true;
-//    }
+   @Override
+   public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+   throws InterruptedException, IOException {
+       listener.getLogger().println("Running OpsLevel Integration plugin...");
+       return true;
+   }
 
     @Override
     public WebHookPublisherDescriptor getDescriptor() {
