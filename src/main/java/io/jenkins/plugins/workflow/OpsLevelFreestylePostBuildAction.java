@@ -1,5 +1,7 @@
-package io.jenkins.plugins;
+package io.jenkins.plugins.workflow;
 
+import io.jenkins.plugins.OpsLevelConfig;
+import io.jenkins.plugins.OpsLevelGlobalConfigUI;
 import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.tasks.Notifier;
 import hudson.tasks.BuildStepMonitor;
@@ -16,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import org.kohsuke.stapler.DataBoundSetter;
 
-public class WebHookPublisher extends Notifier {
+public class OpsLevelFreestylePostBuildAction extends Notifier {
 
     private static final Logger logger = LoggerFactory.getLogger(OpsLevelGlobalConfigUI.class.getName());
 
@@ -30,8 +32,9 @@ public class WebHookPublisher extends Notifier {
     public String deployerName;
 
     @DataBoundConstructor
-    public WebHookPublisher(String webHookUrl, String serviceAlias, String environment, String description,
-                            String deployUrl, String deployerId, String deployerEmail, String deployerName) {
+    public OpsLevelFreestylePostBuildAction(String webHookUrl, String serviceAlias, String environment,
+                                            String description, String deployUrl, String deployerId,
+                                            String deployerEmail, String deployerName) {
         super();
         this.webHookUrl = cleanupValue(webHookUrl);
         this.serviceAlias = cleanupValue(serviceAlias);
@@ -134,12 +137,12 @@ public class WebHookPublisher extends Notifier {
         return BuildStepMonitor.NONE;
     }
 
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-    throws InterruptedException, IOException {
-        listener.getLogger().println("Running OpsLevel Integration plugin...");
-        return true;
-    }
+//    @Override
+//    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+//    throws InterruptedException, IOException {
+//        listener.getLogger().println("Running OpsLevel Integration plugin...");
+//        return true;
+//    }
 
     @Override
     public WebHookPublisherDescriptor getDescriptor() {

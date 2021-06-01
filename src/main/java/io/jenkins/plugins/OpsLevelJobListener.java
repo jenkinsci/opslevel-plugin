@@ -21,6 +21,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.annotation.Nonnull;
 
+import io.jenkins.plugins.workflow.OpsLevelFreestylePostBuildAction;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -34,14 +35,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Extension
-public class JobListener extends RunListener<AbstractBuild> {
+public class OpsLevelJobListener extends RunListener<AbstractBuild> {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private final OkHttpClient client;
 
-    private static final Logger log = LoggerFactory.getLogger(JobListener.class);
+    private static final Logger log = LoggerFactory.getLogger(OpsLevelJobListener.class);
 
-    public JobListener() {
+    public OpsLevelJobListener() {
         super(AbstractBuild.class);
         client = new OkHttpClient();
     }
@@ -49,24 +50,23 @@ public class JobListener extends RunListener<AbstractBuild> {
     @Override
     public void onCompleted(AbstractBuild build, @Nonnull TaskListener listener) {
         PrintStream buildConsole = listener.getLogger();
-        buildConsole.println("Starting onCompleted...");
 
         Result result = build.getResult();
         if (result == null) {
-            buildConsole.println("Stopping: build has no result");
+            log.debug("OpsLevel notifier: stop because build has no result");
             return;
         }
 
         // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
         if (!result.equals(Result.SUCCESS) && !result.equals(Result.UNSTABLE) ) {
-            buildConsole.println("Stopping: build status is " + result.toString());
+            log.debug("OpsLevel notifier: stop because build status is " + result.toString());
             return;
         }
 
         OpsLevelConfig opsLevelConfig;
-        WebHookPublisher publisher = GetWebHookPublisher(build);
+        OpsLevelFreestylePostBuildAction publisher = GetWebHookPublisher(build);
         if (publisher == null) {
-            buildConsole.println("Publisher not found on this build.");
+             log.debug("OpsLevel notifier: publisher not found on this build");
             opsLevelConfig = new OpsLevelConfig();
         } else {
             opsLevelConfig = publisher.generateOpsLevelConfig();
@@ -74,7 +74,7 @@ public class JobListener extends RunListener<AbstractBuild> {
 
         OpsLevelConfig globalConfig = new OpsLevelGlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
         if (opsLevelConfig.webHookUrl.isEmpty() && globalConfig.webHookUrl.isEmpty()) {
-            buildConsole.println("Stopping: Webhook URL not configured");
+            buildConsole.println("OpsLevel notifier: stop because webhook URL not configured");
             return;
         }
 
@@ -87,7 +87,6 @@ public class JobListener extends RunListener<AbstractBuild> {
     public void postSuccessfulDeployToOpsLevel(AbstractBuild build, @Nonnull TaskListener listener,
                                                OpsLevelConfig opsLevelConfig) {
         PrintStream buildConsole = listener.getLogger();
-        buildConsole.println("It's running now....");
 
         try {
             JsonObject payload = buildDeployPayload(opsLevelConfig, build, listener);
@@ -102,10 +101,10 @@ public class JobListener extends RunListener<AbstractBuild> {
         }
     }
 
-    private WebHookPublisher GetWebHookPublisher(AbstractBuild build) {
+    private OpsLevelFreestylePostBuildAction GetWebHookPublisher(AbstractBuild build) {
         for (Object publisher : build.getProject().getPublishersList().toMap().values()) {
-            if (publisher instanceof WebHookPublisher) {
-                return (WebHookPublisher) publisher;
+            if (publisher instanceof OpsLevelFreestylePostBuildAction) {
+                return (OpsLevelFreestylePostBuildAction) publisher;
             }
         }
         return null;
@@ -115,7 +114,6 @@ public class JobListener extends RunListener<AbstractBuild> {
         // Get the plugin version to pass through as a request parameter
         final Properties properties = new Properties();
         String version = "";
-        // Have to catch the potential IO Exception
         try {
             // TODO: In development this seems to pull from src/main/config.properties, instead of target/classes/properties
             //       Once the plugin is compiled it will get the correct version string, but we could not figure out how
@@ -123,7 +121,7 @@ public class JobListener extends RunListener<AbstractBuild> {
             properties.load(getClass().getClassLoader().getResourceAsStream("config.properties"));
             version = properties.getProperty("plugin.version");
         }
-        catch (Exception e) {
+        catch (IOException e) {
             log.error("Project properties does not exist. {}", e.toString());
         }
 

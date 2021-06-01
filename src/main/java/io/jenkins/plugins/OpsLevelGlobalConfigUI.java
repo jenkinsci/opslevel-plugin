@@ -31,6 +31,14 @@ public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements De
     public static final class DescriptorImpl extends Descriptor<OpsLevelGlobalConfigUI> {
         private OpsLevelConfig globalConfig = new OpsLevelConfig();
 
+        public DescriptorImpl() {
+            super();
+            try {
+                load();
+            } catch(NullPointerException e) {
+            }
+        }
+
         public String getWebHookUrl() {
             return globalConfig.webHookUrl;
         }
@@ -57,39 +65,39 @@ public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements De
 
         @DataBoundSetter
         public void setWebHookUrl(String webHookUrl) {
-            globalConfig.webHookUrl = webHookUrl;
+            globalConfig.webHookUrl = cleanupValue(webHookUrl);
         }
 
         @DataBoundSetter
         public void setEnvironment(String environment) {
-            globalConfig.environment = environment;
+            globalConfig.environment = cleanupValue(environment);
         }
 
         @DataBoundSetter
         public void setDescription(String description) {
-            globalConfig.description = description;
+            globalConfig.description = cleanupValue(description);
         }
 
         @DataBoundSetter
         public void setDeployerId(String deployerId) {
-            globalConfig.deployerId = deployerId;
+            globalConfig.deployerId = cleanupValue(deployerId);
         }
 
         @DataBoundSetter
         public void setDeployerEmail(String deployerEmail) {
-            globalConfig.deployerEmail = deployerEmail;
+            globalConfig.deployerEmail = cleanupValue(deployerEmail);
         }
 
         @DataBoundSetter
         public void setDeployerName(String deployerName) {
-            globalConfig.deployerName = deployerName;
+            globalConfig.deployerName = cleanupValue(deployerName);
         }
 
-        public DescriptorImpl() {
-            try {
-                load();
-            } catch(NullPointerException e) {
+        private static String cleanupValue(String someValue) {
+            if (someValue == null) {
+                return "";
             }
+            return someValue.trim();
         }
 
         public OpsLevelConfig getOpsLevelConfig() {
