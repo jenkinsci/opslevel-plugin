@@ -29,7 +29,7 @@ public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements De
 
     @Extension @Symbol("OpsLevelGlobalNotifier")
     public static final class DescriptorImpl extends Descriptor<OpsLevelGlobalConfigUI> {
-        private OpsLevelConfig globalConfig = OpsLevelGlobalConfig.get();
+        private OpsLevelConfig globalConfig = new OpsLevelConfig();
 
         public String getWebHookUrl() {
             return globalConfig.webHookUrl;
