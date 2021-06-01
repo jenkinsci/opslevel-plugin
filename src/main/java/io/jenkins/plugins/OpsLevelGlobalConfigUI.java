@@ -92,6 +92,11 @@ public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements De
             }
         }
 
+        public OpsLevelConfig generateOpsLevelConfig() {
+            load();
+            return globalConfig;
+        }
+
         public String getDefaultEnvironment() {
             return "Prod Buddy";
         }

@@ -72,7 +72,8 @@ public class JobListener extends RunListener<AbstractBuild> {
             opsLevelConfig = publisher.generateOpsLevelConfig();
         }
 
-        OpsLevelConfig globalConfig = OpsLevelGlobalConfig.get();
+//        OpsLevelConfig globalConfig = OpsLevelGlobalConfig.get();
+        OpsLevelConfig globalConfig = new OpsLevelGlobalConfigUI.DescriptorImpl().generateOpsLevelConfig();
         if (opsLevelConfig.webHookUrl.isEmpty() && globalConfig.webHookUrl.isEmpty()) {
             buildConsole.println("Stopping: Webhook URL not configured");
             return;
