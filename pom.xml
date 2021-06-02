@@ -120,6 +120,10 @@
             <version>2.0.2</version>
             <scope>test</scope>
         </dependency>
+      <dependency>
+        <groupId>org.jenkins-ci.plugins.workflow</groupId>
+        <artifactId>workflow-step-api</artifactId>
+      </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
