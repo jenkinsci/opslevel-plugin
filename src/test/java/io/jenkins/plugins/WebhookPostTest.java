@@ -3,7 +3,7 @@ package io.jenkins.plugins;
 import hudson.EnvVars;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import io.jenkins.plugins.opslevel.JobListener;
-import io.jenkins.plugins.opslevel.workflow.FreestylePostBuildAction;
+import io.jenkins.plugins.opslevel.workflow.PostBuildAction;
 import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class WebhookPostTest {
         server.enqueue(new MockResponse().setBody("{\"result\": \"ok\"}"));
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getPublishersList().add(new FreestylePostBuildAction(
+        project.getPublishersList().add(new PostBuildAction(
             webhookUrl,
             "",
             "",
@@ -94,7 +94,7 @@ public class WebhookPostTest {
         server.enqueue(new MockResponse().setBody("{\"result\": \"ok\"}"));
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getPublishersList().add(new FreestylePostBuildAction(
+        project.getPublishersList().add(new PostBuildAction(
             webhookUrl,
             "",
             "",
@@ -155,7 +155,7 @@ public class WebhookPostTest {
         server.enqueue(new MockResponse().setBody("{\"result\": \"ok\"}"));
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getPublishersList().add(new FreestylePostBuildAction(
+        project.getPublishersList().add(new PostBuildAction(
                 webhookUrl,
                 "the-lake-house-device",
                 "staging",
@@ -216,7 +216,7 @@ public class WebhookPostTest {
         server.enqueue(new MockResponse().setResponseCode(404).setBody("{\"error\":\"Example not found\"}"));
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getPublishersList().add(new FreestylePostBuildAction(
+        project.getPublishersList().add(new PostBuildAction(
                 webhookUrl,
                 "",
                 "",

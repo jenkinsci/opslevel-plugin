@@ -2,7 +2,11 @@ package io.jenkins.plugins.opslevel;
 
 import hudson.Extension;
 import hudson.EnvVars;
-import hudson.model.*;
+import hudson.model.FreeStyleProject;
+import hudson.model.Job;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 
 import java.io.File;
@@ -11,7 +15,6 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Properties;
 import java.util.UUID;
@@ -20,9 +23,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.annotation.Nonnull;
 
-import io.jenkins.plugins.opslevel.workflow.FreestylePostBuildAction;
-import io.jenkins.plugins.opslevel.workflow.OpsLevelJobProperty;
-import io.jenkins.plugins.opslevel.workflow.PipelineNotifyStep;
+import io.jenkins.plugins.opslevel.workflow.PostBuildAction;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -50,6 +51,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
+        PrintStream buildConsole = listener.getLogger();
 
         Result result = run.getResult();
         if (result == null) {
@@ -63,46 +65,65 @@ public class JobListener extends RunListener<Run<?, ?>> {
             return;
         }
 
-        OpsLevelConfig opsLevelConfig;
-        FreestylePostBuildAction publisher = GetWebHookPublisher(run);
-        if (publisher == null) {
-             logger.debug("OpsLevel notifier: publisher not found on this run");
-            opsLevelConfig = new OpsLevelConfig();
-        } else {
-            opsLevelConfig = publisher.generateOpsLevelConfig();
-        }
-
+        Job project = run.getParent();
+        OpsLevelConfig jobConfig = null;
         OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
 
+        // Freestyle builds can add our notifier as a post-build action.
+        // If present it may contain params
+        if (project instanceof FreeStyleProject) {
+            jobConfig = GetOpsLevelConfigFromFreestyleJob((FreeStyleProject) project);
+        }
+        if (jobConfig == null) {
+            if (!globalConfig.run) {
+                logger.debug("OpsLevel notifier: skipping because it's disabled globally");
+                return;
+            }
+            logger.debug("OpsLevel notifier: publisher not found on this project");
+            jobConfig = new OpsLevelConfig();
+        } else if (!jobConfig.run) {
+            String message = "OpsLevel notifier: skipping because it's disabled on this project";
+            buildConsole.println(message);
+            logger.debug(message);
+            return;
+        }
+
+        // Notifications can be disabled based on project name
         if (!globalConfig.ignoreList.isEmpty()) {
-            String thisJobName = run.getParent().getFullDisplayName().trim();
-            String[] ignoredJobs = opsLevelConfig.ignoreList.split(",");
-            for (String jobName: ignoredJobs) {
+            String thisJobName = project.getFullDisplayName().trim();
+            String[] ignoredJobs = jobConfig.ignoreList.split(",");
+            for (String jobName : ignoredJobs) {
                 if (jobName.trim().equals(thisJobName)) {
-                    logger.debug("OpsLevel notifier: skipping because builds named \"" + jobName + "\" are ignored");
+                    String message = "OpsLevel notifier: skipping because global configuration says ignore " +
+                                     "builds named \"" + jobName + "\"";
+                    buildConsole.println(message);
+                    logger.debug(message);
                     return;
                 }
             }
         }
 
-        opsLevelConfig.populateEmptyValuesFrom(globalConfig);
+        jobConfig.populateEmptyValuesFrom(globalConfig);
 
-        if (opsLevelConfig.webHookUrl.isEmpty()) {
+        if (jobConfig.webHookUrl.isEmpty()) {
             logger.info("OpsLevel notifier: skipping because webhook URL not configured");
             return;
         }
 
+        // Pipelines are different from freestyle builds. Pipelines can notify multiple times, or not at
+        // all (suppress the global notifier)
+        // If this property is null, respect the global notifier. If it's non-null, our notifier appeared
+        // somewhere in the pipeline script and has been handled already - nothing to do here.
         if (run.getParent().getProperty(OpsLevelJobProperty.class) != null) {
             logger.debug("OpsLevel notifier: skipping because pipeline contained OpsLevel notify step");
             return;
         }
 
-        postSuccessfulDeployToOpsLevel(run, listener, opsLevelConfig);
+        postSuccessfulDeployToOpsLevel(run, listener, jobConfig);
     }
 
-
     public void postSuccessfulDeployToOpsLevel(Run run, @Nonnull TaskListener listener,
-                                               OpsLevelConfig opsLevelConfig) {
+            OpsLevelConfig opsLevelConfig) {
         PrintStream buildConsole = listener.getLogger();
 
         String webHookUrl = opsLevelConfig.webHookUrl;
@@ -110,26 +131,19 @@ public class JobListener extends RunListener<Run<?, ?>> {
             JsonObject payload = buildDeployPayload(opsLevelConfig, run, listener);
             buildConsole.println("Publishing deploy to OpsLevel via: " + webHookUrl);
             httpPost(webHookUrl, payload, buildConsole);
-        }
-        catch(Exception e) {
+        } catch(Exception e) {
             String message = e.toString() + ". Could not publish deploy to OpsLevel.";
             logger.error(message);
             buildConsole.println("Error :" + message);
         }
     }
 
-    private FreestylePostBuildAction GetWebHookPublisher(Run run) {
-        // TODO: Figure out how to do a similar workflow if the job (run.getParent())
-        // is a pipeline (org.jenkinsci.plugins.workflow.job.WorkflowJob)
-        if (run.getParent() instanceof FreeStyleProject) {
-            FreeStyleProject job = (FreeStyleProject) run.getParent();
-            for (Object publisher : job.getPublishersList().toMap().values()) {
-                if (publisher instanceof FreestylePostBuildAction) {
-                    return (FreestylePostBuildAction) publisher;
-                }
+    private OpsLevelConfig GetOpsLevelConfigFromFreestyleJob(FreeStyleProject project) {
+        for (Object publisher : project.getPublishersList().toMap().values()) {
+            if (publisher instanceof PostBuildAction) {
+                return ((PostBuildAction) publisher).generateOpsLevelConfig();
             }
         }
-
         return null;
     }
 
@@ -143,8 +157,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
             //       to get it looking at the right place in development
             properties.load(getClass().getClassLoader().getResourceAsStream("config.properties"));
             version = properties.getProperty("plugin.version");
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             logger.error("Project properties does not exist. {}", e.toString());
         }
 
@@ -168,9 +181,9 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
         // Finally, put the request together
         Request request = new Request.Builder()
-            .url(url)
-            .post(body)
-            .build();
+        .url(url)
+        .post(body)
+        .build();
 
         try {
             Response response = client.newCall(request).execute();
@@ -266,8 +279,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
             // By default the UI shows http://localhost:8080/jenkins/
             // but the actual value is unset so this function throws an exception
             return run.getAbsoluteUrl();
-        }
-        catch(java.lang.IllegalStateException e) {
+        } catch(java.lang.IllegalStateException e) {
             // run.getUrl() always works but returns a relative path
             return "http://jenkins-location-is-not-set.local/" + run.getUrl();
         }

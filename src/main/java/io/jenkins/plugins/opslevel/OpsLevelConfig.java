@@ -1,6 +1,7 @@
 package io.jenkins.plugins.opslevel;
 
 public class OpsLevelConfig {
+    public boolean run;
     public String webHookUrl;
     public String serviceAlias;
     public String environment;
@@ -12,6 +13,7 @@ public class OpsLevelConfig {
     public String ignoreList;
 
     public OpsLevelConfig() {
+        run = true;
         webHookUrl = "";
         serviceAlias = "";
         environment = "";
@@ -26,7 +28,8 @@ public class OpsLevelConfig {
     @Override
     public String toString() {
         return "OpsLevelConfig{" +
-                "webHookUrl='" + webHookUrl + '\'' +
+                "run=" + run +
+                ", webHookUrl='" + webHookUrl + '\'' +
                 ", serviceAlias='" + serviceAlias + '\'' +
                 ", environment='" + environment + '\'' +
                 ", description='" + description + '\'' +
@@ -40,6 +43,7 @@ public class OpsLevelConfig {
 
     public void populateEmptyValuesFrom(OpsLevelConfig otherConfig) {
         // Bring in values from another config, preferring to keep our own
+        // this.run is purposely excluded from this merge
 
         if (this.webHookUrl.isEmpty()) {
             this.webHookUrl = otherConfig.webHookUrl;

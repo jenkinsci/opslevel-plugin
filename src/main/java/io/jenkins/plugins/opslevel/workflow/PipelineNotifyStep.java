@@ -2,10 +2,12 @@ package io.jenkins.plugins.opslevel.workflow;
 
 import com.google.common.collect.ImmutableSet;
 import hudson.Extension;
-import hudson.model.*;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import io.jenkins.plugins.opslevel.GlobalConfigUI;
 import io.jenkins.plugins.opslevel.JobListener;
 import io.jenkins.plugins.opslevel.OpsLevelConfig;
+import io.jenkins.plugins.opslevel.OpsLevelJobProperty;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -23,6 +25,7 @@ public class PipelineNotifyStep extends Step {
 
     private static final Logger logger = LoggerFactory.getLogger(JobListener.class);
 
+    private boolean run = true;
     private String webHookUrl = "";
     private String serviceAlias = "";
     private String environment = "";
@@ -34,6 +37,11 @@ public class PipelineNotifyStep extends Step {
 
     @DataBoundConstructor
     public PipelineNotifyStep() {
+    }
+
+    @DataBoundSetter
+    public void setRun(Boolean run) {
+        this.run = run;
     }
 
     @DataBoundSetter
@@ -79,6 +87,7 @@ public class PipelineNotifyStep extends Step {
     @Override
     public StepExecution start(StepContext context) {
         OpsLevelConfig config = new OpsLevelConfig();
+        config.run = this.run;
         config.webHookUrl = this.webHookUrl;
         config.serviceAlias = this.serviceAlias;
         config.environment = this.environment;
@@ -87,7 +96,7 @@ public class PipelineNotifyStep extends Step {
         config.deployerId = this.deployerId;
         config.deployerEmail = this.deployerEmail;
         config.deployerName = this.deployerName;
-        return new OpsLevelNotifyParamsExecute(context, config);
+        return new OpsLevelNotifyStepExecute(context, config);
     }
 
     @Extension
@@ -109,16 +118,13 @@ public class PipelineNotifyStep extends Step {
         }
     }
 
-
-
-
-    public static class OpsLevelNotifyParamsExecute extends SynchronousStepExecution<StepExecution> {
+    public static class OpsLevelNotifyStepExecute extends SynchronousStepExecution<StepExecution> {
 
         private final OpsLevelConfig config;
         private Run run = null;
         private TaskListener listener = null;
 
-        OpsLevelNotifyParamsExecute(StepContext context, OpsLevelConfig config) {
+        OpsLevelNotifyStepExecute(StepContext context, OpsLevelConfig config) {
             super(context);
             this.config = config;
             TaskListener listener = null;
@@ -130,7 +136,6 @@ public class PipelineNotifyStep extends Step {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-//            logger.error("$$$$$$$$$ run: {}", run);
         }
 
         @Override
@@ -139,8 +144,7 @@ public class PipelineNotifyStep extends Step {
                 return null;
             }
 
-            logger.error("######################### RUNNING!\n {}", this.config);
-
+            // Suppress the global notifier even if run is false
             OpsLevelJobProperty jobProp = new OpsLevelJobProperty();
             try {
                 this.run.getParent().addProperty(jobProp);
@@ -149,11 +153,13 @@ public class PipelineNotifyStep extends Step {
                 return null;
             }
 
+            if (!config.run) {
+                return null;
+            }
+
             OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
             this.config.populateEmptyValuesFrom(globalConfig);
             new JobListener().postSuccessfulDeployToOpsLevel(this.run, this.listener, this.config);
-
-            logger.error("######################### DONE!");
 
             return null;
         }

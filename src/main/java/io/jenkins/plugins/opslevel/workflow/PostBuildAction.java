@@ -16,7 +16,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FreestylePostBuildAction extends Notifier {
+public class PostBuildAction extends Notifier {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalConfigUI.class.getName());
 
@@ -30,9 +30,9 @@ public class FreestylePostBuildAction extends Notifier {
     public String deployerName;
 
     @DataBoundConstructor
-    public FreestylePostBuildAction(String webHookUrl, String serviceAlias, String environment,
-                                    String description, String deployUrl, String deployerId,
-                                    String deployerEmail, String deployerName) {
+    public PostBuildAction(String webHookUrl, String serviceAlias, String environment,
+                           String description, String deployUrl, String deployerId,
+                           String deployerEmail, String deployerName) {
         super();
         this.webHookUrl = cleanupValue(webHookUrl);
         this.serviceAlias = cleanupValue(serviceAlias);
