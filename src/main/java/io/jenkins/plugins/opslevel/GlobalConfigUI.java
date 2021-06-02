@@ -63,6 +63,10 @@ public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describabl
             return globalConfig.deployerName;
         }
 
+        public String getIgnoreList() {
+            return globalConfig.ignoreList;
+        }
+
         @DataBoundSetter
         public void setWebHookUrl(String webHookUrl) {
             globalConfig.webHookUrl = cleanupValue(webHookUrl);
@@ -91,6 +95,11 @@ public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describabl
         @DataBoundSetter
         public void setDeployerName(String deployerName) {
             globalConfig.deployerName = cleanupValue(deployerName);
+        }
+
+        @DataBoundSetter
+        public void setIgnoreList(String ignoreList) {
+            globalConfig.ignoreList = cleanupValue(ignoreList);
         }
 
         private static String cleanupValue(String someValue) {

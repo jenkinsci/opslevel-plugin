@@ -2,9 +2,7 @@ package io.jenkins.plugins.opslevel;
 
 import hudson.Extension;
 import hudson.EnvVars;
-import hudson.model.Run;
-import hudson.model.Result;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.model.listeners.RunListener;
 
 import java.io.File;
@@ -73,12 +71,21 @@ public class JobListener extends RunListener<Run<?, ?>> {
         }
 
         OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
-        if (opsLevelConfig.webHookUrl.isEmpty() && globalConfig.webHookUrl.isEmpty()) {
+        opsLevelConfig.populateEmptyValuesFrom(globalConfig);
+
+        if (opsLevelConfig.webHookUrl.isEmpty()) {
             buildConsole.println("OpsLevel notifier: stop because webhook URL not configured");
             return;
         }
 
-        opsLevelConfig.populateEmptyValuesFrom(globalConfig);
+        // TODO: displayName is a build number like "#123"
+        //       fullDisplayName prepends the project
+        if (!opsLevelConfig.ignoreList.isEmpty()) {
+            logger.error("ignoreList was provided but not implemented yet!");
+            Job job = run.getParent(); // TODO: what can this do?! It's the project!
+            logger.error("####################################### {}", job.getFullDisplayName());
+        }
+
 
         postSuccessfulDeployToOpsLevel(run, listener, opsLevelConfig);
     }
@@ -88,16 +95,16 @@ public class JobListener extends RunListener<Run<?, ?>> {
                                                OpsLevelConfig opsLevelConfig) {
         PrintStream buildConsole = listener.getLogger();
 
+        String webHookUrl = opsLevelConfig.webHookUrl;
         try {
             JsonObject payload = buildDeployPayload(opsLevelConfig, run, listener);
-            String webHookUrl = opsLevelConfig.webHookUrl;
-            buildConsole.print("Publishing deploy to OpsLevel via: " + webHookUrl + "\n");
+            buildConsole.println("Publishing deploy to OpsLevel via: " + webHookUrl);
             httpPost(webHookUrl, payload, buildConsole);
         }
         catch(Exception e) {
-            String message = e.toString() + ". Could not publish deploy to OpsLevel.\n";
+            String message = e.toString() + ". Could not publish deploy to OpsLevel.";
             logger.error(message);
-            buildConsole.print("Error :" + message);
+            buildConsole.println("Error :" + message);
         }
     }
 

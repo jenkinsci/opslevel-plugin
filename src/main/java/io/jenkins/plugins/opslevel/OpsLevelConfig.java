@@ -9,6 +9,7 @@ public class OpsLevelConfig {
     public String deployerId;
     public String deployerEmail;
     public String deployerName;
+    public String ignoreList;
 
     public OpsLevelConfig() {
         webHookUrl = "";
@@ -19,6 +20,7 @@ public class OpsLevelConfig {
         deployerId = "";
         deployerEmail = "";
         deployerName = "";
+        ignoreList = "";
     }
 
     @Override
@@ -32,6 +34,7 @@ public class OpsLevelConfig {
                 ", deployerId='" + deployerId + '\'' +
                 ", deployerEmail='" + deployerEmail + '\'' +
                 ", deployerName='" + deployerName + '\'' +
+                ", ignoreList='" + ignoreList + '\'' +
                 '}';
     }
 
@@ -61,6 +64,9 @@ public class OpsLevelConfig {
         }
         if (this.deployerName.isEmpty()) {
             this.deployerName = otherConfig.deployerName;
+        }
+        if (this.ignoreList.isEmpty()) {
+            this.ignoreList = otherConfig.ignoreList;
         }
     }
 }

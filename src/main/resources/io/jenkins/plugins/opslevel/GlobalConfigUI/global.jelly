@@ -14,24 +14,28 @@
       <f:textbox/>
     </f:entry>
 
-      <f:advanced align="left" title="Override defaults">
+    <f:entry title="Projects to Ignore" field="ignoreList">
+      <f:textbox />
+    </f:entry>
 
-      <f:entry title="Environment" field="environment">
+    <f:advanced align="left" title="Override defaults">
+        <f:entry title="Environment" field="environment">
         <f:textbox/>
       </f:entry>
-      <f:entry title="Description" field="description">
+        <f:entry title="Description" field="description">
         <f:textbox/>
       </f:entry>
-      <f:entry title="Deployer ID" field="deployerId">
+        <f:entry title="Deployer ID" field="deployerId">
         <f:textbox/>
       </f:entry>
-      <f:entry title="Deployer Email" field="deployerEmail">
+        <f:entry title="Deployer Email" field="deployerEmail">
         <f:textbox/>
       </f:entry>
-      <f:entry title="Deployer Name" field="deployerName">
+        <f:entry title="Deployer Name" field="deployerName">
         <f:textbox/>
       </f:entry>
 
     </f:advanced>
+
   </f:section>
 </j:jelly>
