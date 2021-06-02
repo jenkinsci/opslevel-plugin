@@ -109,12 +109,17 @@ public class JobListener extends RunListener<Run<?, ?>> {
     }
 
     private FreestylePostBuildAction GetWebHookPublisher(Run run) {
-        for (Object publisher : run.getAllActions()) {
-            logger.warn(publisher.toString());
-            // if (publisher instanceof OpsLevelFreestylePostBuildAction) {
-            //     return (OpsLevelFreestylePostBuildAction) publisher;
-            // }
+        // TODO: Figure out how to do a similar workflow if the job (run.getParent())
+        // is a pipeline (org.jenkinsci.plugins.workflow.job.WorkflowJob)
+        if (run.getParent() instanceof FreeStyleProject) {
+            FreeStyleProject job = (FreeStyleProject) run.getParent();
+            for (Object publisher : job.getPublishersList().toMap().values()) {
+                if (publisher instanceof FreestylePostBuildAction) {
+                    return (FreestylePostBuildAction) publisher;
+                }
+            }
         }
+
         return null;
     }
 
