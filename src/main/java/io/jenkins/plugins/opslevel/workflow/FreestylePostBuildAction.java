@@ -1,7 +1,7 @@
-package io.jenkins.plugins.workflow;
+package io.jenkins.plugins.opslevel.workflow;
 
-import io.jenkins.plugins.OpsLevelConfig;
-import io.jenkins.plugins.OpsLevelGlobalConfigUI;
+import io.jenkins.plugins.opslevel.OpsLevelConfig;
+import io.jenkins.plugins.opslevel.GlobalConfigUI;
 import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.tasks.Notifier;
 import hudson.tasks.BuildStepMonitor;
@@ -16,9 +16,9 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OpsLevelFreestylePostBuildAction extends Notifier {
+public class FreestylePostBuildAction extends Notifier {
 
-    private static final Logger logger = LoggerFactory.getLogger(OpsLevelGlobalConfigUI.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(GlobalConfigUI.class.getName());
 
     public String webHookUrl;
     public String serviceAlias;
@@ -30,9 +30,9 @@ public class OpsLevelFreestylePostBuildAction extends Notifier {
     public String deployerName;
 
     @DataBoundConstructor
-    public OpsLevelFreestylePostBuildAction(String webHookUrl, String serviceAlias, String environment,
-                                            String description, String deployUrl, String deployerId,
-                                            String deployerEmail, String deployerName) {
+    public FreestylePostBuildAction(String webHookUrl, String serviceAlias, String environment,
+                                    String description, String deployUrl, String deployerId,
+                                    String deployerEmail, String deployerName) {
         super();
         this.webHookUrl = cleanupValue(webHookUrl);
         this.serviceAlias = cleanupValue(serviceAlias);

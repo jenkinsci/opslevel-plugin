@@ -1,4 +1,4 @@
-package io.jenkins.plugins;
+package io.jenkins.plugins.opslevel;
 
 import hudson.Extension;
 import hudson.EnvVars;
@@ -21,7 +21,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.annotation.Nonnull;
 
-import io.jenkins.plugins.workflow.OpsLevelFreestylePostBuildAction;
+import io.jenkins.plugins.opslevel.workflow.FreestylePostBuildAction;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -35,14 +35,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Extension
-public class OpsLevelJobListener extends RunListener<Run<?, ?>> {
+public class JobListener extends RunListener<Run<?, ?>> {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private final OkHttpClient client;
 
-    private static final Logger log = LoggerFactory.getLogger(OpsLevelJobListener.class);
+    private static final Logger log = LoggerFactory.getLogger(JobListener.class);
 
-    public OpsLevelJobListener() {
+    public JobListener() {
         super();
         client = new OkHttpClient();
     }
@@ -64,7 +64,7 @@ public class OpsLevelJobListener extends RunListener<Run<?, ?>> {
         }
 
         OpsLevelConfig opsLevelConfig;
-        OpsLevelFreestylePostBuildAction publisher = GetWebHookPublisher(run);
+        FreestylePostBuildAction publisher = GetWebHookPublisher(run);
         if (publisher == null) {
              log.debug("OpsLevel notifier: publisher not found on this run");
             opsLevelConfig = new OpsLevelConfig();
@@ -72,7 +72,7 @@ public class OpsLevelJobListener extends RunListener<Run<?, ?>> {
             opsLevelConfig = publisher.generateOpsLevelConfig();
         }
 
-        OpsLevelConfig globalConfig = new OpsLevelGlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
+        OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
         if (opsLevelConfig.webHookUrl.isEmpty() && globalConfig.webHookUrl.isEmpty()) {
             buildConsole.println("OpsLevel notifier: stop because webhook URL not configured");
             return;
@@ -101,7 +101,7 @@ public class OpsLevelJobListener extends RunListener<Run<?, ?>> {
         }
     }
 
-    private OpsLevelFreestylePostBuildAction GetWebHookPublisher(Run run) {
+    private FreestylePostBuildAction GetWebHookPublisher(Run run) {
         for (Object publisher : run.getAllActions()) {
             log.warn(publisher.toString());
             // if (publisher instanceof OpsLevelFreestylePostBuildAction) {

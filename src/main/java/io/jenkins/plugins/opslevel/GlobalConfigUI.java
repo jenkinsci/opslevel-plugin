@@ -1,4 +1,4 @@
-package io.jenkins.plugins;
+package io.jenkins.plugins.opslevel;
 
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -15,20 +15,20 @@ import java.util.logging.Logger;
 
 
 @Extension
-public class OpsLevelGlobalConfigUI extends RunListener<Run<?, ?>> implements Describable<OpsLevelGlobalConfigUI> {
+public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describable<GlobalConfigUI> {
 
-    private static final Logger logger = Logger.getLogger(OpsLevelGlobalConfigUI.class.getName());
+    private static final Logger logger = Logger.getLogger(GlobalConfigUI.class.getName());
 
-    public Descriptor<OpsLevelGlobalConfigUI> getDescriptor() {
+    public Descriptor<GlobalConfigUI> getDescriptor() {
         return getDescriptorImpl();
     }
 
     public DescriptorImpl getDescriptorImpl() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(OpsLevelGlobalConfigUI.class);
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(GlobalConfigUI.class);
     }
 
     @Extension @Symbol("OpsLevelGlobalNotifier")
-    public static final class DescriptorImpl extends Descriptor<OpsLevelGlobalConfigUI> {
+    public static final class DescriptorImpl extends Descriptor<GlobalConfigUI> {
         private OpsLevelConfig globalConfig = new OpsLevelConfig();
 
         public DescriptorImpl() {
