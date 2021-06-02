@@ -50,13 +50,13 @@ public class JobListener extends RunListener<Run<?, ?>> {
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
         Result result = run.getResult();
         if (result == null) {
-            logger.debug("OpsLevel notifier: skipping beucase this run has no result");
+            logger.debug("OpsLevel notifier: skipping because this run has no result");
             return;
         }
 
         // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
         if (!result.equals(Result.SUCCESS) && !result.equals(Result.UNSTABLE) ) {
-            logger.debug("OpsLevel notifier: skipping beucase run status is " + result.toString());
+            logger.debug("OpsLevel notifier: skipping because run status is " + result.toString());
             return;
         }
 
@@ -70,22 +70,23 @@ public class JobListener extends RunListener<Run<?, ?>> {
         }
 
         OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
-        opsLevelConfig.populateEmptyValuesFrom(globalConfig);
 
-        if (opsLevelConfig.webHookUrl.isEmpty()) {
-            logger.info("OpsLevel notifier: skipping beucase webhook URL not configured");
-            return;
-        }
-
-        if (!opsLevelConfig.ignoreList.isEmpty()) {
+        if (!globalConfig.ignoreList.isEmpty()) {
             String thisJobName = run.getParent().getFullDisplayName().trim();
             String[] ignoredJobs = opsLevelConfig.ignoreList.split(",");
             for (String jobName: ignoredJobs) {
                 if (jobName.trim().equals(thisJobName)) {
-                    logger.debug("OpsLevel notifier: skipping beucase this build is ignored");
+                    logger.debug("OpsLevel notifier: skipping because builds named \"" + jobName + "\" are ignored");
                     return;
                 }
             }
+        }
+
+        opsLevelConfig.populateEmptyValuesFrom(globalConfig);
+
+        if (opsLevelConfig.webHookUrl.isEmpty()) {
+            logger.info("OpsLevel notifier: skipping because webhook URL not configured");
+            return;
         }
 
         postSuccessfulDeployToOpsLevel(run, listener, opsLevelConfig);
