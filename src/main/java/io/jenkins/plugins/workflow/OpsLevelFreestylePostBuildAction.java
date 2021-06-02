@@ -16,8 +16,6 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.kohsuke.stapler.DataBoundSetter;
-
 public class OpsLevelFreestylePostBuildAction extends Notifier {
 
     private static final Logger logger = LoggerFactory.getLogger(OpsLevelGlobalConfigUI.class.getName());
@@ -67,69 +65,31 @@ public class OpsLevelFreestylePostBuildAction extends Notifier {
     }
 
     public String getWebHookUrl() {
-        logger.warn("GETTING WEBHOOk <<<<<<<<<<<<<");
         return this.webHookUrl;
-    }
-
-    @DataBoundSetter
-    public void setWebHookUrl(String webHookUrl) {
-        // TODO: setters may not be used? Confirm this
-        logger.warn("SETTING WEBHOOK <<<<<<<<<<<<<<<<<<<");
-        this.webHookUrl = webHookUrl;
     }
 
     public String getServiceAlias() {
         return this.serviceAlias;
     }
 
-    @DataBoundSetter
-    public void setServiceAlias(String serviceAlias) {
-        this.serviceAlias = serviceAlias;
-    }
-
     public String getEnvironment() {
         return this.environment;
-    }
-
-    @DataBoundSetter
-    public void setEnvironment(String environment) {
-        this.environment = environment;
     }
 
     public String getDescription() {
         return this.description;
     }
 
-    @DataBoundSetter
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public String getDeployUrl() {
         return this.deployUrl;
-    }
-
-    @DataBoundSetter
-    public void setDeployUrl(String deployUrl) {
-        this.deployUrl = deployUrl;
     }
 
     public String getDeployerId() {
         return this.deployerId;
     }
 
-    @DataBoundSetter
-    public void setDeployerId(String deployerId) {
-        this.deployerId = deployerId;
-    }
-
     public String getDeployerEmail() {
         return this.deployerEmail;
-    }
-
-    @DataBoundSetter
-    public void setDeployerEmail(String deployerEmail) {
-        this.deployerEmail = deployerEmail;
     }
 
     @Override
