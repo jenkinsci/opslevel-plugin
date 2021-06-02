@@ -21,6 +21,8 @@ import javax.json.JsonObjectBuilder;
 import javax.annotation.Nonnull;
 
 import io.jenkins.plugins.opslevel.workflow.FreestylePostBuildAction;
+import io.jenkins.plugins.opslevel.workflow.OpsLevelJobProperty;
+import io.jenkins.plugins.opslevel.workflow.PipelineNotifyStep;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -48,6 +50,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
+
         Result result = run.getResult();
         if (result == null) {
             logger.debug("OpsLevel notifier: skipping because this run has no result");
@@ -87,6 +90,13 @@ public class JobListener extends RunListener<Run<?, ?>> {
         if (opsLevelConfig.webHookUrl.isEmpty()) {
             logger.info("OpsLevel notifier: skipping because webhook URL not configured");
             return;
+        }
+
+        OpsLevelJobProperty opsLevelJobProp = (OpsLevelJobProperty) run.getParent().getProperty(OpsLevelJobProperty.class);
+        logger.error("************************************ {}", opsLevelJobProp);
+        if (opsLevelJobProp != null) {
+            logger.error("************************************ {}", opsLevelJobProp.config);
+
         }
 
         postSuccessfulDeployToOpsLevel(run, listener, opsLevelConfig);

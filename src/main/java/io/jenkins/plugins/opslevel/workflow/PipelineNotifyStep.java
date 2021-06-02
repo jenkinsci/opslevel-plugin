@@ -3,21 +3,34 @@ package io.jenkins.plugins.opslevel.workflow;
 import com.google.common.collect.ImmutableSet;
 import hudson.Extension;
 import hudson.model.*;
+import io.jenkins.plugins.opslevel.GlobalConfigUI;
 import io.jenkins.plugins.opslevel.JobListener;
 import io.jenkins.plugins.opslevel.OpsLevelConfig;
-import org.jenkinsci.plugins.workflow.steps.*;
+import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.steps.SynchronousStepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Set;
 
 public class PipelineNotifyStep extends Step {
 
     private static final Logger logger = LoggerFactory.getLogger(JobListener.class);
 
-    private final OpsLevelConfig config = new OpsLevelConfig();
+    private String webHookUrl = "";
+    private String serviceAlias = "";
+    private String environment = "";
+    private String description = "";
+    private String deployUrl = "";
+    private String deployerId = "";
+    private String deployerEmail = "";
+    private String deployerName = "";
 
     @DataBoundConstructor
     public PipelineNotifyStep() {
@@ -25,47 +38,56 @@ public class PipelineNotifyStep extends Step {
 
     @DataBoundSetter
     public void setWebHookUrl(String webHookUrl) {
-        config.webHookUrl = webHookUrl;
+        this.webHookUrl = webHookUrl;
     }
 
     @DataBoundSetter
     public void setServiceAlias(String serviceAlias) {
-        config.serviceAlias = serviceAlias;
+        this.serviceAlias = serviceAlias;
     }
 
     @DataBoundSetter
     public void setEnvironment(String environment) {
-        config.environment = environment;
+        this.environment = environment;
     }
 
     @DataBoundSetter
     public void setDescription(String description) {
-        config.description = description;
+        this.description = description;
     }
 
     @DataBoundSetter
     public void setDeployUrl(String deployUrl) {
-        config.deployUrl = deployUrl;
+        this.deployUrl = deployUrl;
     }
 
     @DataBoundSetter
     public void setDeployerId(String deployerId) {
-        config.deployerId = deployerId;
+        this.deployerId = deployerId;
     }
 
     @DataBoundSetter
     public void setDeployerEmail(String deployerEmail) {
-        config.deployerEmail = deployerEmail;
+        this.deployerEmail = deployerEmail;
     }
 
     @DataBoundSetter
     public void setDeployerName(String deployerName) {
-        config.deployerName = deployerName;
+        this.deployerName = deployerName;
     }
 
     @Override
     public StepExecution start(StepContext context) {
-        return new OpsLevelNotifyParamsExecute(context, this.config);
+        OpsLevelConfig config = new OpsLevelConfig();
+        config.webHookUrl = this.webHookUrl;
+        config.serviceAlias = this.serviceAlias;
+        config.environment = this.environment;
+        config.description = this.description;
+        config.deployUrl = this.deployUrl;
+        config.deployerId = this.deployerId;
+        config.deployerEmail = this.deployerEmail;
+        config.deployerName = this.deployerName;
+        return new OpsLevelNotifyParamsExecute(context, config);
     }
 
     @Extension
@@ -83,20 +105,50 @@ public class PipelineNotifyStep extends Step {
 
         @Override
         public String getDisplayName() {
-            return "What is this display name?";
+            return getFunctionName();
         }
     }
 
 
-    public static class OpsLevelNotifyParamsExecute extends SynchronousNonBlockingStepExecution<StepExecution> {
+
+
+    public static class OpsLevelNotifyParamsExecute extends SynchronousStepExecution<StepExecution> {
+
+        private final OpsLevelConfig config;
+        private Run run = null;
 
         OpsLevelNotifyParamsExecute(StepContext context, OpsLevelConfig config) {
             super(context);
+            this.config = config;
+            TaskListener listener = null;
+            try {
+                this.run = context.get(Run.class);
+                listener = context.get(TaskListener.class);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+//            logger.error("$$$$$$$$$ run: {}", run);
         }
 
         @Override
         protected StepExecution run() throws Exception {
-            logger.error("######################### RUNNING!");
+            logger.error("######################### RUNNING!\n {}", this.config);
+            if (this.run == null) {
+                return null;
+            }
+
+            OpsLevelJobProperty jobProp = new OpsLevelJobProperty(this.config);
+            try {
+                this.run.getParent().addProperty(jobProp);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+
+//            OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
+
             return null;
         }
     }
