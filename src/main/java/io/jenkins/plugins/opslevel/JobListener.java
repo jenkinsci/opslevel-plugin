@@ -11,6 +11,7 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Properties;
 import java.util.UUID;
@@ -47,17 +48,15 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
-        PrintStream buildConsole = listener.getLogger();
-
         Result result = run.getResult();
         if (result == null) {
-            logger.debug("OpsLevel notifier: stop because run has no result");
+            logger.debug("OpsLevel notifier: skipping beucase this run has no result");
             return;
         }
 
         // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
         if (!result.equals(Result.SUCCESS) && !result.equals(Result.UNSTABLE) ) {
-            logger.debug("OpsLevel notifier: stop because run status is " + result.toString());
+            logger.debug("OpsLevel notifier: skipping beucase run status is " + result.toString());
             return;
         }
 
@@ -74,18 +73,20 @@ public class JobListener extends RunListener<Run<?, ?>> {
         opsLevelConfig.populateEmptyValuesFrom(globalConfig);
 
         if (opsLevelConfig.webHookUrl.isEmpty()) {
-            buildConsole.println("OpsLevel notifier: stop because webhook URL not configured");
+            logger.info("OpsLevel notifier: skipping beucase webhook URL not configured");
             return;
         }
 
-        // TODO: displayName is a build number like "#123"
-        //       fullDisplayName prepends the project
         if (!opsLevelConfig.ignoreList.isEmpty()) {
-            logger.error("ignoreList was provided but not implemented yet!");
-            Job job = run.getParent(); // TODO: what can this do?! It's the project!
-            logger.error("####################################### {}", job.getFullDisplayName());
+            String thisJobName = run.getParent().getFullDisplayName().trim();
+            String[] ignoredJobs = opsLevelConfig.ignoreList.split(",");
+            for (String jobName: ignoredJobs) {
+                if (jobName.trim().equals(thisJobName)) {
+                    logger.debug("OpsLevel notifier: skipping beucase this build is ignored");
+                    return;
+                }
+            }
         }
-
 
         postSuccessfulDeployToOpsLevel(run, listener, opsLevelConfig);
     }
