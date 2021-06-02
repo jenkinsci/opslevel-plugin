@@ -92,11 +92,9 @@ public class JobListener extends RunListener<Run<?, ?>> {
             return;
         }
 
-        OpsLevelJobProperty opsLevelJobProp = (OpsLevelJobProperty) run.getParent().getProperty(OpsLevelJobProperty.class);
-        logger.error("************************************ {}", opsLevelJobProp);
-        if (opsLevelJobProp != null) {
-            logger.error("************************************ {}", opsLevelJobProp.config);
-
+        if (run.getParent().getProperty(OpsLevelJobProperty.class) != null) {
+            logger.debug("OpsLevel notifier: skipping because pipeline contained OpsLevel notify step");
+            return;
         }
 
         postSuccessfulDeployToOpsLevel(run, listener, opsLevelConfig);

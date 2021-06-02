@@ -116,6 +116,7 @@ public class PipelineNotifyStep extends Step {
 
         private final OpsLevelConfig config;
         private Run run = null;
+        private TaskListener listener = null;
 
         OpsLevelNotifyParamsExecute(StepContext context, OpsLevelConfig config) {
             super(context);
@@ -123,7 +124,7 @@ public class PipelineNotifyStep extends Step {
             TaskListener listener = null;
             try {
                 this.run = context.get(Run.class);
-                listener = context.get(TaskListener.class);
+                this.listener = context.get(TaskListener.class);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
@@ -134,12 +135,13 @@ public class PipelineNotifyStep extends Step {
 
         @Override
         protected StepExecution run() throws Exception {
-            logger.error("######################### RUNNING!\n {}", this.config);
-            if (this.run == null) {
+            if (this.run == null || this.listener == null) {
                 return null;
             }
 
-            OpsLevelJobProperty jobProp = new OpsLevelJobProperty(this.config);
+            logger.error("######################### RUNNING!\n {}", this.config);
+
+            OpsLevelJobProperty jobProp = new OpsLevelJobProperty();
             try {
                 this.run.getParent().addProperty(jobProp);
             } catch (IOException e) {
@@ -147,7 +149,11 @@ public class PipelineNotifyStep extends Step {
                 return null;
             }
 
-//            OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
+            OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
+            this.config.populateEmptyValuesFrom(globalConfig);
+            new JobListener().postSuccessfulDeployToOpsLevel(this.run, this.listener, this.config);
+
+            logger.error("######################### DONE!");
 
             return null;
         }
