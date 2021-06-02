@@ -10,14 +10,14 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
-
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @Extension
 public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describable<GlobalConfigUI> {
 
-    private static final Logger logger = Logger.getLogger(GlobalConfigUI.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(JobListener.class);
 
     public Descriptor<GlobalConfigUI> getDescriptor() {
         return getDescriptorImpl();

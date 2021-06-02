@@ -40,7 +40,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private final OkHttpClient client;
 
-    private static final Logger log = LoggerFactory.getLogger(JobListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(JobListener.class);
 
     public JobListener() {
         super();
@@ -53,20 +53,20 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
         Result result = run.getResult();
         if (result == null) {
-            log.debug("OpsLevel notifier: stop because run has no result");
+            logger.debug("OpsLevel notifier: stop because run has no result");
             return;
         }
 
         // Send the webhook on successful deploys. UNSTABLE could be successful depending on how the pipeline is set up
         if (!result.equals(Result.SUCCESS) && !result.equals(Result.UNSTABLE) ) {
-            log.debug("OpsLevel notifier: stop because run status is " + result.toString());
+            logger.debug("OpsLevel notifier: stop because run status is " + result.toString());
             return;
         }
 
         OpsLevelConfig opsLevelConfig;
         FreestylePostBuildAction publisher = GetWebHookPublisher(run);
         if (publisher == null) {
-             log.debug("OpsLevel notifier: publisher not found on this run");
+             logger.debug("OpsLevel notifier: publisher not found on this run");
             opsLevelConfig = new OpsLevelConfig();
         } else {
             opsLevelConfig = publisher.generateOpsLevelConfig();
@@ -96,14 +96,14 @@ public class JobListener extends RunListener<Run<?, ?>> {
         }
         catch(Exception e) {
             String message = e.toString() + ". Could not publish deploy to OpsLevel.\n";
-            log.error(message);
+            logger.error(message);
             buildConsole.print("Error :" + message);
         }
     }
 
     private FreestylePostBuildAction GetWebHookPublisher(Run run) {
         for (Object publisher : run.getAllActions()) {
-            log.warn(publisher.toString());
+            logger.warn(publisher.toString());
             // if (publisher instanceof OpsLevelFreestylePostBuildAction) {
             //     return (OpsLevelFreestylePostBuildAction) publisher;
             // }
@@ -123,7 +123,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
             version = properties.getProperty("plugin.version");
         }
         catch (IOException e) {
-            log.error("Project properties does not exist. {}", e.toString());
+            logger.error("Project properties does not exist. {}", e.toString());
         }
 
         if (webHookUrl == null) {
@@ -140,7 +140,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
         // Build the body
         String jsonString = payload.toString();
-        log.info("Sending OpsLevel Integration payload:\n{}", jsonString);
+        logger.info("Sending OpsLevel Integration payload:\n{}", jsonString);
 
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, jsonString);
 
@@ -152,15 +152,15 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
         try {
             Response response = client.newCall(request).execute();
-            log.debug("Invocation of OpsLevel webhook {} successful", url);
+            logger.debug("Invocation of OpsLevel webhook {} successful", url);
             ResponseBody responseBody = response.body();
             if (responseBody != null) {
                 String message = "OpsLevel Response: " + responseBody.string() + "\n";
                 buildConsole.print(message);
-                log.info(message);
+                logger.info(message);
             }
         } catch (Exception e) {
-            log.warn("Invocation of OpsLevel webhook {} failed: {}", url, e.toString());
+            logger.warn("Invocation of OpsLevel webhook {} failed: {}", url, e.toString());
             throw e;
         }
     }
@@ -335,7 +335,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
                 return null;
             }
             String strCmd = String.join(" ", cmd);
-            log.warn("Failed to execute command: {}. Exit code: {}. Stderr:: {}", strCmd, exitCode, stderr);
+            logger.warn("Failed to execute command: {}. Exit code: {}. Stderr:: {}", strCmd, exitCode, stderr);
         }
 
         try {
