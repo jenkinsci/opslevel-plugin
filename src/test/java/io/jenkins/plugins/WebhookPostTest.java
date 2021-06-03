@@ -42,7 +42,7 @@ public class WebhookPostTest {
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getPublishersList().add(new PostBuildAction(
-                true,
+            true,
             webhookUrl,
             "",
             "",
@@ -95,7 +95,8 @@ public class WebhookPostTest {
         server.enqueue(new MockResponse().setBody("{\"result\": \"ok\"}"));
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getPublishersList().add(new PostBuildAction(true,
+        project.getPublishersList().add(new PostBuildAction(
+            true,
             webhookUrl,
             "",
             "",
@@ -156,15 +157,16 @@ public class WebhookPostTest {
         server.enqueue(new MockResponse().setBody("{\"result\": \"ok\"}"));
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getPublishersList().add(new PostBuildAction(true,
-                webhookUrl,
-                "the-lake-house-device",
-                "staging",
-                "Deploy to staging from Jenkins build #${BUILD_NUMBER}",
-                "http://staging.example.org/",
-                "Shlorpian-24601",
-                "yumyulack@example.org",
-                "Yumyulack"
+        project.getPublishersList().add(new PostBuildAction(
+            true,
+            webhookUrl,
+            "the-lake-house-device",
+            "staging",
+            "Deploy to staging from Jenkins build #${BUILD_NUMBER}",
+            "http://staging.example.org/",
+            "Shlorpian-24601",
+            "yumyulack@example.org",
+            "Yumyulack"
         ));
 
         project.setScm(new ExtractResourceSCM(getClass().getResource("/project-with-git.zip")));
@@ -217,15 +219,16 @@ public class WebhookPostTest {
         server.enqueue(new MockResponse().setResponseCode(404).setBody("{\"error\":\"Example not found\"}"));
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getPublishersList().add(new PostBuildAction(true,
-                webhookUrl,
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                ""
+        project.getPublishersList().add(new PostBuildAction(
+            true,
+            webhookUrl,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
         ));
 
         FreeStyleBuild build = project.scheduleBuild2(0).get();
