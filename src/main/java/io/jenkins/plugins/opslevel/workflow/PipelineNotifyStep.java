@@ -120,9 +120,9 @@ public class PipelineNotifyStep extends Step {
 
     public static class OpsLevelNotifyStepExecute extends SynchronousStepExecution<StepExecution> {
 
-        private final OpsLevelConfig config;
-        private Run run = null;
-        private TaskListener listener = null;
+        private transient final OpsLevelConfig config;
+        private transient Run run = null;
+        private transient TaskListener listener = null;
 
         OpsLevelNotifyStepExecute(StepContext context, OpsLevelConfig config) {
             super(context);

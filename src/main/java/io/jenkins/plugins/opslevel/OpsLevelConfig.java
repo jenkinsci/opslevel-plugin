@@ -28,17 +28,17 @@ public class OpsLevelConfig {
     @Override
     public String toString() {
         return "OpsLevelConfig{" +
-                "run=" + run +
-                ", webHookUrl='" + webHookUrl + '\'' +
-                ", serviceAlias='" + serviceAlias + '\'' +
-                ", environment='" + environment + '\'' +
-                ", description='" + description + '\'' +
-                ", deployUrl='" + deployUrl + '\'' +
-                ", deployerId='" + deployerId + '\'' +
-                ", deployerEmail='" + deployerEmail + '\'' +
-                ", deployerName='" + deployerName + '\'' +
-                ", ignoreList='" + ignoreList + '\'' +
-                '}';
+               "run=" + run +
+               ", webHookUrl='" + webHookUrl + '\'' +
+               ", serviceAlias='" + serviceAlias + '\'' +
+               ", environment='" + environment + '\'' +
+               ", description='" + description + '\'' +
+               ", deployUrl='" + deployUrl + '\'' +
+               ", deployerId='" + deployerId + '\'' +
+               ", deployerEmail='" + deployerEmail + '\'' +
+               ", deployerName='" + deployerName + '\'' +
+               ", ignoreList='" + ignoreList + '\'' +
+               '}';
     }
 
     public void populateEmptyValuesFrom(OpsLevelConfig otherConfig) {
