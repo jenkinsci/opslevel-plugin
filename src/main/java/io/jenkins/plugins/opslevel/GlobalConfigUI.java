@@ -43,8 +43,8 @@ public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describabl
             return globalConfig.run;
         }
 
-        public String getWebHookUrl() {
-            return globalConfig.webHookUrl;
+        public String getWebhookUrl() {
+            return globalConfig.webhookUrl;
         }
 
         public String getEnvironment() {
@@ -77,8 +77,8 @@ public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describabl
         }
 
         @DataBoundSetter
-        public void setWebHookUrl(String webHookUrl) {
-            globalConfig.webHookUrl = cleanupValue(webHookUrl);
+        public void setWebhookUrl(String webhookUrl) {
+            globalConfig.webhookUrl = cleanupValue(webhookUrl);
         }
 
         @DataBoundSetter

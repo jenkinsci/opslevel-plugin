@@ -26,7 +26,7 @@ public class PipelineNotifyStep extends Step {
     private static final Logger logger = LoggerFactory.getLogger(JobListener.class);
 
     private boolean run = true;
-    private String webHookUrl = "";
+    private String webhookUrl = "";
     private String serviceAlias = "";
     private String environment = "";
     private String description = "";
@@ -45,8 +45,8 @@ public class PipelineNotifyStep extends Step {
     }
 
     @DataBoundSetter
-    public void setWebHookUrl(String webHookUrl) {
-        this.webHookUrl = webHookUrl;
+    public void setWebhookUrl(String webhookUrl) {
+        this.webhookUrl = webhookUrl;
     }
 
     @DataBoundSetter
@@ -88,7 +88,7 @@ public class PipelineNotifyStep extends Step {
     public StepExecution start(StepContext context) {
         OpsLevelConfig config = new OpsLevelConfig();
         config.run = this.run;
-        config.webHookUrl = this.webHookUrl;
+        config.webhookUrl = this.webhookUrl;
         config.serviceAlias = this.serviceAlias;
         config.environment = this.environment;
         config.description = this.description;
@@ -124,16 +124,17 @@ public class PipelineNotifyStep extends Step {
         private transient Run run = null;
         private transient TaskListener listener = null;
 
+        // If you add/remove/change any fields above, increment this number
+        // https://howtodoinjava.com/java/serialization/serialversionuid/
+        private static final long serialVersionUID = 1L;
+
         OpsLevelNotifyStepExecute(StepContext context, OpsLevelConfig config) {
             super(context);
             this.config = config;
-            TaskListener listener = null;
             try {
                 this.run = context.get(Run.class);
                 this.listener = context.get(TaskListener.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

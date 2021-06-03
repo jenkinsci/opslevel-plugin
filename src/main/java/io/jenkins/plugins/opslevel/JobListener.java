@@ -105,7 +105,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
         jobConfig.populateEmptyValuesFrom(globalConfig);
 
-        if (jobConfig.webHookUrl.isEmpty()) {
+        if (jobConfig.webhookUrl.isEmpty()) {
             logger.info("OpsLevel notifier: skipping because webhook URL not configured");
             return;
         }
@@ -126,11 +126,11 @@ public class JobListener extends RunListener<Run<?, ?>> {
             OpsLevelConfig opsLevelConfig) {
         PrintStream buildConsole = listener.getLogger();
 
-        String webHookUrl = opsLevelConfig.webHookUrl;
+        String webhookUrl = opsLevelConfig.webhookUrl;
         try {
             JsonObject payload = buildDeployPayload(opsLevelConfig, run, listener);
-            buildConsole.println("Publishing deploy to OpsLevel via: " + webHookUrl);
-            httpPost(webHookUrl, payload, buildConsole);
+            buildConsole.println("Publishing deploy to OpsLevel via: " + webhookUrl);
+            httpPost(webhookUrl, payload, buildConsole);
         } catch(Exception e) {
             String message = e.toString() + ". Could not publish deploy to OpsLevel.";
             logger.error(message);
@@ -147,7 +147,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
         return null;
     }
 
-    private void httpPost(String webHookUrl, JsonObject payload, PrintStream buildConsole) throws IOException {
+    private void httpPost(String webhookUrl, JsonObject payload, PrintStream buildConsole) throws IOException {
         // Get the plugin version to pass through as a request parameter
         final Properties properties = new Properties();
         String version = "";
@@ -161,7 +161,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
             logger.error("Project properties does not exist. {}", e.toString());
         }
 
-        HttpUrl httpUrl = HttpUrl.parse(webHookUrl);
+        HttpUrl httpUrl = HttpUrl.parse(webhookUrl);
         if (httpUrl == null) {
             throw new InputMismatchException("Webhook URL is invalid");
         }

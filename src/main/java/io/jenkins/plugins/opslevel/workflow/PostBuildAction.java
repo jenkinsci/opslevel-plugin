@@ -21,7 +21,7 @@ public class PostBuildAction extends Notifier {
     private static final Logger logger = LoggerFactory.getLogger(GlobalConfigUI.class.getName());
 
     public boolean run;
-    public String webHookUrl;
+    public String webhookUrl;
     public String serviceAlias;
     public String environment;
     public String description;
@@ -31,12 +31,12 @@ public class PostBuildAction extends Notifier {
     public String deployerName;
 
     @DataBoundConstructor
-    public PostBuildAction(Boolean run, String webHookUrl, String serviceAlias, String environment,
+    public PostBuildAction(Boolean run, String webhookUrl, String serviceAlias, String environment,
                            String description, String deployUrl, String deployerId,
                            String deployerEmail, String deployerName) {
         super();
         this.run = run;
-        this.webHookUrl = cleanupValue(webHookUrl);
+        this.webhookUrl = cleanupValue(webhookUrl);
         this.serviceAlias = cleanupValue(serviceAlias);
         this.environment = cleanupValue(environment);
         this.description = cleanupValue(description);
@@ -56,7 +56,7 @@ public class PostBuildAction extends Notifier {
     public OpsLevelConfig generateOpsLevelConfig() {
         OpsLevelConfig config = new OpsLevelConfig();
         config.run = this.run;
-        config.webHookUrl = this.webHookUrl;
+        config.webhookUrl = this.webhookUrl;
         config.serviceAlias = this.serviceAlias;
         config.environment = this.environment;
         config.description = this.description;
@@ -71,8 +71,8 @@ public class PostBuildAction extends Notifier {
         return this.run;
     }
 
-    public String getWebHookUrl() {
-        return this.webHookUrl;
+    public String getWebhookUrl() {
+        return this.webhookUrl;
     }
 
     public String getServiceAlias() {

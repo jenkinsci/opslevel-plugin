@@ -14,7 +14,7 @@
       <f:checkbox default="true"/>
     </f:entry>
 
-    <f:entry title="Deploy Webhook URL" field="webHookUrl">
+    <f:entry title="Deploy Webhook URL" field="webhookUrl">
       <f:textbox/>
     </f:entry>
 
