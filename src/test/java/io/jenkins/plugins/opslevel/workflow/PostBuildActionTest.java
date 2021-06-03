@@ -1,4 +1,4 @@
-package io.jenkins.plugins;
+package io.jenkins.plugins.opslevel.workflow;
 
 import hudson.EnvVars;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
@@ -24,7 +24,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class WebhookPostTest {
+public class PostBuildActionTest {
     @Rule
     public JenkinsRule jenkins = new JenkinsRule();
 
@@ -42,15 +42,15 @@ public class WebhookPostTest {
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getPublishersList().add(new PostBuildAction(
-            true,
-            webhookUrl,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
+                true,
+                webhookUrl,
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
         ));
 
         FreeStyleBuild build = project.scheduleBuild2(0).get();
@@ -60,7 +60,6 @@ public class WebhookPostTest {
         String consoleOutput = IOUtils.toString(build.getLogText().readAll());
         log.debug("Build console output:\n{}", consoleOutput);
 
-        assertThat(consoleOutput, containsString("Running OpsLevel Integration plugin..."));
         assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
         assertThat(consoleOutput, containsString("Response: {\"result\": \"ok\"}"));
 
@@ -96,15 +95,15 @@ public class WebhookPostTest {
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getPublishersList().add(new PostBuildAction(
-            true,
-            webhookUrl,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
+                true,
+                webhookUrl,
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
         ));
 
         project.setScm(new ExtractResourceSCM(getClass().getResource("/project-with-git.zip")));
@@ -118,7 +117,6 @@ public class WebhookPostTest {
         String consoleOutput = IOUtils.toString(build.getLogText().readAll());
         log.debug("Build console output:\n{}", consoleOutput);
 
-        assertThat(consoleOutput, containsString("Running OpsLevel Integration plugin..."));
         assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
         assertThat(consoleOutput, containsString("Response: {\"result\": \"ok\"}"));
 
@@ -158,15 +156,15 @@ public class WebhookPostTest {
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getPublishersList().add(new PostBuildAction(
-            true,
-            webhookUrl,
-            "the-lake-house-device",
-            "staging",
-            "Deploy to staging from Jenkins build #${BUILD_NUMBER}",
-            "http://staging.example.org/",
-            "Shlorpian-24601",
-            "yumyulack@example.org",
-            "Yumyulack"
+                true,
+                webhookUrl,
+                "the-lake-house-device",
+                "staging",
+                "Deploy to staging from Jenkins build #${BUILD_NUMBER}",
+                "http://staging.example.org/",
+                "Shlorpian-24601",
+                "yumyulack@example.org",
+                "Yumyulack"
         ));
 
         project.setScm(new ExtractResourceSCM(getClass().getResource("/project-with-git.zip")));
@@ -180,7 +178,6 @@ public class WebhookPostTest {
         String consoleOutput = IOUtils.toString(build.getLogText().readAll());
         log.debug("Build console output:\n{}", consoleOutput);
 
-        assertThat(consoleOutput, containsString("Running OpsLevel Integration plugin..."));
         assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
         assertThat(consoleOutput, containsString("Response: {\"result\": \"ok\"}"));
 
@@ -220,15 +217,15 @@ public class WebhookPostTest {
         String webhookUrl = server.url("").toString(); // .url("") means root path. Result will be http://<host>:<port>/
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getPublishersList().add(new PostBuildAction(
-            true,
-            webhookUrl,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
+                true,
+                webhookUrl,
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
         ));
 
         FreeStyleBuild build = project.scheduleBuild2(0).get();
@@ -238,7 +235,6 @@ public class WebhookPostTest {
         String consoleOutput = IOUtils.toString(build.getLogText().readAll());
         log.debug("Build console output:\n{}", consoleOutput);
 
-        assertThat(consoleOutput, containsString("Running OpsLevel Integration plugin..."));
         assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
         assertThat(consoleOutput, containsString("Response: {\"error\":\"Example not found\"}"));
 
