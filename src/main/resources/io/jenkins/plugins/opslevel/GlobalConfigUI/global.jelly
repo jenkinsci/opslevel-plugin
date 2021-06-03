@@ -10,6 +10,10 @@
     </p>
     <br />
 
+    <f:entry title="Notify for All Builds" field="run">
+      <f:checkbox default="true"/>
+    </f:entry>
+
     <f:entry title="Deploy Webhook URL" field="webHookUrl">
       <f:textbox/>
     </f:entry>

@@ -82,7 +82,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
             logger.debug("OpsLevel notifier: publisher not found on this project");
             jobConfig = new OpsLevelConfig();
         } else if (!jobConfig.run) {
-            String message = "OpsLevel notifier: skipping because it's disabled on this project";
+            String message = "OpsLevel notifier: skipping because this project disabled notify";
             buildConsole.println(message);
             logger.debug(message);
             return;
@@ -90,11 +90,11 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
         // Notifications can be disabled based on project name
         if (!globalConfig.ignoreList.isEmpty()) {
+            String[] ignoredJobs = globalConfig.ignoreList.split(",");
             String thisJobName = project.getFullDisplayName().trim();
-            String[] ignoredJobs = jobConfig.ignoreList.split(",");
             for (String jobName : ignoredJobs) {
                 if (jobName.trim().equals(thisJobName)) {
-                    String message = "OpsLevel notifier: skipping because global configuration says ignore " +
+                    String message = "OpsLevel notifier: skipping because global configuration says to ignore " +
                                      "builds named \"" + jobName + "\"";
                     buildConsole.println(message);
                     logger.debug(message);
@@ -161,9 +161,6 @@ public class JobListener extends RunListener<Run<?, ?>> {
             logger.error("Project properties does not exist. {}", e.toString());
         }
 
-        if (webHookUrl == null) {
-            throw new InputMismatchException("Webhook URL is missing");
-        }
         HttpUrl httpUrl = HttpUrl.parse(webHookUrl);
         if (httpUrl == null) {
             throw new InputMismatchException("Webhook URL is invalid");

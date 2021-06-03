@@ -39,6 +39,10 @@ public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describabl
             }
         }
 
+        public boolean getRun() {
+            return globalConfig.run;
+        }
+
         public String getWebHookUrl() {
             return globalConfig.webHookUrl;
         }
@@ -65,6 +69,11 @@ public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describabl
 
         public String getIgnoreList() {
             return globalConfig.ignoreList;
+        }
+
+        @DataBoundSetter
+        public void setRun(boolean run) {
+            globalConfig.run = run;
         }
 
         @DataBoundSetter
