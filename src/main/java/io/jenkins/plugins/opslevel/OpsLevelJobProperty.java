@@ -8,7 +8,7 @@ import hudson.model.JobPropertyDescriptor;
 public class OpsLevelJobProperty extends JobProperty {
 
     // Attaching this to a job indicates a notification has already been sent.
-    // The global notifier will NOT notify when it sees this property
+    // The global notifier will ignore jobs with this property
 
     public OpsLevelJobProperty() {
     }

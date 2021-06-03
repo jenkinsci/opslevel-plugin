@@ -6,7 +6,7 @@
     <p>
       Notify OpsLevel of all successful builds.
       <br />
-      Values can be overriden per-build by adding a post-build action (to freestyle builds).
+      Values can be overriden in pipelines using the keyword, or in freestyle builds using the post-build action.
     </p>
     <br />
 

@@ -107,7 +107,7 @@ public class PostBuildAction extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
     throws InterruptedException, IOException {
-        listener.getLogger().println("Running OpsLevel Integration plugin...");
+        // The job listener will notice this job. Nothing to do here.
         return true;
     }
 
@@ -125,7 +125,7 @@ public class PostBuildAction extends Notifier {
 
         @Override
         public String getDisplayName() {
-            return "Modify OpsLevel notifications for this build";
+            return "Modify OpsLevel notification for this build";
         }
     }
 }

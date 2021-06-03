@@ -160,7 +160,7 @@ public class PipelineNotifyStep extends Step {
 
             OpsLevelConfig globalConfig = new GlobalConfigUI.DescriptorImpl().getOpsLevelConfig();
             this.config.populateEmptyValuesFrom(globalConfig);
-            new JobListener().postSuccessfulDeployToOpsLevel(this.run, this.listener, this.config);
+            new JobListener().postDeployToOpsLevel(this.run, this.listener, this.config);
 
             return null;
         }

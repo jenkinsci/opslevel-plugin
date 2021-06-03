@@ -106,7 +106,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
         jobConfig.populateEmptyValuesFrom(globalConfig);
 
         if (jobConfig.webhookUrl.isEmpty()) {
-            logger.info("OpsLevel notifier: skipping because webhook URL not configured");
+            logger.warn("OpsLevel notifier: skipping because webhook URL not configured");
             return;
         }
 
@@ -114,16 +114,16 @@ public class JobListener extends RunListener<Run<?, ?>> {
         // all (suppress the global notifier)
         // If this property is null, respect the global notifier. If it's non-null, our notifier appeared
         // somewhere in the pipeline script and has been handled already - nothing to do here.
-        if (run.getParent().getProperty(OpsLevelJobProperty.class) != null) {
+        if (project.getProperty(OpsLevelJobProperty.class) != null) {
             logger.debug("OpsLevel notifier: skipping because pipeline contained OpsLevel notify step");
             return;
         }
 
-        postSuccessfulDeployToOpsLevel(run, listener, jobConfig);
+        postDeployToOpsLevel(run, listener, jobConfig);
     }
 
-    public void postSuccessfulDeployToOpsLevel(Run run, @Nonnull TaskListener listener,
-            OpsLevelConfig opsLevelConfig) {
+    public void postDeployToOpsLevel(Run run, @Nonnull TaskListener listener,
+                                     OpsLevelConfig opsLevelConfig) {
         PrintStream buildConsole = listener.getLogger();
 
         String webhookUrl = opsLevelConfig.webhookUrl;
@@ -172,7 +172,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
 
         // Build the body
         String jsonString = payload.toString();
-        logger.info("Sending OpsLevel Integration payload:\n{}", jsonString);
+        logger.debug("Sending OpsLevel Integration payload:\n{}", jsonString);
 
         RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, jsonString);
 
