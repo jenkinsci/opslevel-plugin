@@ -109,7 +109,7 @@ public class PipelineNotifyStep extends Step {
 
         @Override
         public String getFunctionName() {
-            return "opsLevelNotifyParams";
+            return "opsLevelNotify";
         }
 
         @Override
