@@ -39,7 +39,7 @@ If you need more fine grained control, you can override the notification paramet
   1. Here's an example of the parameters you can override:
 ```
   opsLevelNotifyParams(
-    webhookUrl: "https://app.opslevel.com/integrations/deploy/3e06d761-0347-4741-a617-222434cf161a",
+    webhookUrl: "https://app.opslevel.com/integrations/deploy/3e06d761-0347-4741-a617-XXXXXXXXXXX",
     serviceAlias: "catalog_service",
     environment: "Staging",
     description: "Test Description",
