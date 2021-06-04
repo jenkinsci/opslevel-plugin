@@ -2,32 +2,63 @@
 
 Provides Jenkins integration with OpsLevel. This allows you to notify OpsLevel when a deploy succeeds.
 
-## Getting started
+# Getting started
+## Add a Jenkins Integration in OpsLevel
+1. Get an OpsLevel account <https://www.opslevel.com>
+1. In the OpsLevel app, Click **Integrations** in the left sidebar
+1. Click on the **+ New Integration** button
+1. Add the **Jenkins Integration**
+![Jenkins Integration](docs/images/jenkins_integration.png)
 
-1. Get an OpsLevel account <https://opslevel.com>
-2. Make sure you have a deploy endpoint set up, or create a new one <https://opslevel.com/integrations>
-3. Install this plugin on your Jenkins server:
-    1.  From the Jenkins homepage navigate to `Manage Jenkins`
-    2.  Navigate to `Manage Plugins`,
-    3.  Change the tab to `Available`,
-    4.  Search for `opslevel`,
-    5.  Check the box next to install.
+## Install the Jenkins plugin
+1. From your Jenkins home page, navigate to **Manage Jenkins**
+1. Navigate to **Manage Plugins**
+1. Change the tab to **Available**
+1. Search for 'opslevel'
+1. Check the box next to install & install the plugin
+
+## Jenkins Configuration
+### Global Configuration
+1. From your Jenkins home page, navigate to **Manage Jenkins**
+1. Navigate to **Configure System**
+1. Find the **Global OpsLevel Integration** section
+1. In the OpsLevel App, copy the webhook URL from the **Jenkins Integration** we made:
+![Jenkins Integration Webhook URL](docs/images/jenkins_integration_webhook_url.png)
+1. paste it into the **Deploy Webhook URL** box:
+![Jenkins Global Configuration](docs/images/opslevel_global_configuration.png)
+1. Click Save
+
+OpsLevel will now be notified after every successful build!
+
+If you need more fine grained control, you can override the notification parameters from within your builds/pipelines. Importantly, if you don't want to notify every single build, you could uncheck the **Notify for all builds** checkbox in the Global Configuration and just add build steps to the builds you care about. Similarly, if there only a few builds that you want to mute, you could enable notifications globally and override specific builds to not run. Here's a look at what the configuration looks like for both pipelines and freestyle jobs:
+
+### Pipeline Configuration
+  1. Navigate to your job and click **Configure** in the left sidebar
+  1. Add an `opsLevelNotifyParams` post step with the desired parameter overrides:
+  ![Jenkins Pipeline Configuration](docs/images/opslevel_pipeline_configuration.png)
+  1. Here's an example of the parameters you can override:
+```
+  opsLevelNotifyParams(
+    webhookUrl: "https://app.opslevel.com/integrations/deploy/3e06d761-0347-4741-a617-222434cf161a",
+    serviceAlias: "catalog_service",
+    environment: "Staging",
+    description: "Test Description",
+    deployUrl: "",
+    deployerId: "",
+    deployerEmail: "",
+    deployerName: "Jenkins Test Deploy",
+    run: true
+  )
+```
+
+### Freestyle Job Configuration
+  1.  Navigate to your job and click **Configure** in the left sidebar
+  1.  Add our post-build action **Publish successful build to OpsLevel**
+  1.  You can override notification parameters here:
+  ![Jenkins Configuration](docs/images/opslevel_post_build_action.png)
 
 
-### Pipelines
-
-Not supported yet.
-
-### Freestyle job
-
-1. Navigate to your job
-2. Click 'Configure' in the left sidebar
-3. Add our post-build action 'Publish successful build to OpsLevel'
-4. Configure the 'Deploy WebHook URL'. You can find this URL in your OpsLevel Deploy Integration <https://opslevel.com/integrations>
-
-![](/docs/opslevel_post_build_action.png)
-
-## Developer Instructions
+# Developer Instructions
 
 Refer to jenkins plugin guidelines: [contribution guidelines](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md)
 
