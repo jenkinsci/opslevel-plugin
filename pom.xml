@@ -9,11 +9,10 @@
     </parent>
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>opslevel</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>${revision}</version>
     <packaging>hpi</packaging>
     <properties>
-        <revision>1.0.0</revision>
-        <changelist>-SNAPSHOT</changelist>
+        <revision>1.2.0</revision>
         <jenkins.version>2.277.1</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
@@ -120,6 +119,16 @@
             <version>2.0.2</version>
             <scope>test</scope>
         </dependency>
+      <dependency>
+        <groupId>org.jenkins-ci.plugins.workflow</groupId>
+        <artifactId>workflow-step-api</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkins-ci.plugins.workflow</groupId>
+        <artifactId>workflow-job</artifactId>
+        <version>2.40</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
