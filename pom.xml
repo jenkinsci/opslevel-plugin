@@ -18,6 +18,7 @@
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
     </properties>
     <name>OpsLevel Plugin</name>
+    <description>Provides Jenkins integration with OpsLevel. This allows you to notify OpsLevel when a build succeeds.</description>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
 
     <!-- Add resource filtering to pass build time variables to runtime -->
