@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class JobListenerTest {
@@ -57,7 +58,8 @@ public class JobListenerTest {
 
         RecordedRequest request = server.takeRequest();
         String httpRequestUrl = request.toString();
-        Assert.assertEquals(httpRequestUrl, "POST /?agent=jenkins-1.0.0-SNAPSHOT HTTP/1.1");
+        Assert.assertThat(httpRequestUrl, startsWith("POST /?agent=jenkins"));
+        Assert.assertThat(httpRequestUrl, endsWith("HTTP/1.1"));
         Assert.assertEquals(server.getRequestCount(), 1);
 
         server.shutdown();
