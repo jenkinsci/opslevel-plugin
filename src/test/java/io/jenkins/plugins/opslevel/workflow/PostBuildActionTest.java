@@ -205,7 +205,7 @@ public class PostBuildActionTest {
         JsonObject commitJson = payload.getJsonObject("commit");
         Assert.assertEquals(commitJson.getString("sha"), "500ca67ed52a9ca20f3181e618347e61f86a0625");
         Assert.assertEquals(commitJson.getString("branch"), "origin/master");
-        Assert.assertEquals(commitJson.getString("message"), "Fix typo");
+        Assert.assertThat(commitJson.getString("message"), startsWith("Fix typo"));
 
         server.shutdown();
     }
