@@ -3,7 +3,6 @@ package io.jenkins.plugins.opslevel.workflow;
 import hudson.EnvVars;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import io.jenkins.plugins.opslevel.JobListener;
-import io.jenkins.plugins.opslevel.workflow.PostBuildAction;
 import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,6 +15,7 @@ import okhttp3.mockwebserver.*;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import java.io.Reader;
 import java.io.StringReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +58,9 @@ public class PostBuildActionTest {
         jenkins.assertBuildStatusSuccess(build);
 
         // The build console is the output shown to the user in Jenkins' UI
-        String consoleOutput = IOUtils.toString(build.getLogText().readAll());
+        Reader reader = build.getLogText().readAll();
+        String consoleOutput = IOUtils.toString(reader);
+        reader.close();
         log.debug("Build console output:\n{}", consoleOutput);
 
         assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
@@ -116,7 +118,9 @@ public class PostBuildActionTest {
         jenkins.assertBuildStatusSuccess(build);
 
         // The build console is the output shown to the user in Jenkins' UI
-        String consoleOutput = IOUtils.toString(build.getLogText().readAll());
+        Reader reader = build.getLogText().readAll();
+        String consoleOutput = IOUtils.toString(reader);
+        reader.close();
         log.debug("Build console output:\n{}", consoleOutput);
 
         assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
@@ -178,7 +182,9 @@ public class PostBuildActionTest {
         jenkins.assertBuildStatusSuccess(build);
 
         // The build console is the output shown to the user in Jenkins' UI
-        String consoleOutput = IOUtils.toString(build.getLogText().readAll());
+        Reader reader = build.getLogText().readAll();
+        String consoleOutput = IOUtils.toString(reader);
+        reader.close();
         log.debug("Build console output:\n{}", consoleOutput);
 
         assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));
@@ -236,7 +242,9 @@ public class PostBuildActionTest {
         jenkins.assertBuildStatusSuccess(build);
 
         // The build console is the output shown to the user in Jenkins' UI
-        String consoleOutput = IOUtils.toString(build.getLogText().readAll());
+        Reader reader = build.getLogText().readAll();
+        String consoleOutput = IOUtils.toString(reader);
+        reader.close();
         log.debug("Build console output:\n{}", consoleOutput);
 
         assertThat(consoleOutput, containsString("Publishing deploy to OpsLevel via: " + webhookUrl));

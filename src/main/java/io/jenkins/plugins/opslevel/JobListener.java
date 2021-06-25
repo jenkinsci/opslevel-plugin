@@ -120,6 +120,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
         }
 
         postDeployToOpsLevel(run, listener, jobConfig);
+        buildConsole.close();
     }
 
     public void postDeployToOpsLevel(Run run, @Nonnull TaskListener listener,
