@@ -1,26 +1,16 @@
 package io.jenkins.plugins.opslevel;
 
-import hudson.EnvVars;
-import hudson.slaves.EnvironmentVariablesNodeProperty;
-import io.jenkins.plugins.opslevel.JobListener;
-import io.jenkins.plugins.opslevel.workflow.PostBuildAction;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
-import org.jvnet.hudson.test.ExtractResourceSCM;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import hudson.model.*;
 import org.junit.Assert;
 import okhttp3.mockwebserver.*;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.Reader;
-import java.io.StringReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
