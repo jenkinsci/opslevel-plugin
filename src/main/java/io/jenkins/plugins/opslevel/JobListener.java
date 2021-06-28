@@ -120,6 +120,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
         }
 
         postDeployToOpsLevel(run, listener, jobConfig);
+        buildConsole.close();
     }
 
     public void postDeployToOpsLevel(Run run, @Nonnull TaskListener listener,
@@ -336,7 +337,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
         if (output == null) {
             return null;
         }
-        String[] result = output.split(System.lineSeparator(), 2);
+        String[] result = output.split("\n", 2);
         return result[0];
     }
 
