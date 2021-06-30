@@ -7,22 +7,66 @@
         <version>4.16</version>
         <relativePath />
     </parent>
+
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>opslevel</artifactId>
     <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
-    <properties>
-        <revision>1.2.0</revision>
-        <changelist>-SNAPSHOT</changelist>
-        <gitHubRepo>jenkinsci/opslevel-plugin</gitHubRepo>
-        <revision>1.2.0-SNAPSHOT</revision>
-        <jenkins.version>2.277.1</jenkins.version>
-        <java.level>8</java.level>
-        <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-    </properties>
+
     <name>OpsLevel Plugin</name>
     <description>Provides Jenkins integration with OpsLevel. This allows you to notify OpsLevel when a build succeeds.</description>
-    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+    <url>${pluginUrl}</url>
+
+    <organization>
+        <name>OpsLevel</name>
+        <url>https://www.opslevel.com</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>opsleveljason</id>
+            <email>jason@opslevel.com</email>
+            <organization>${organization.name}</organization>
+            <organizationUrl>${organization.url}</organizationUrl>
+        </developer>
+        <developer>
+            <id>sergio-opslevel</id>
+            <email>sergio@opslevel.com</email>
+            <organization>${organization.name}</organization>
+            <organizationUrl>${organization.url}</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
+        <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+        <url>${pluginUrl}</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>${pluginUrl}/issues</url>
+    </issueManagement>
+
+    <properties>
+        <revision>1.2.1</revision>
+        <changelist>-SNAPSHOT</changelist>
+
+        <pluginName>${project.artifactId}-plugin</pluginName>
+        <gitHubRepo>jenkinsci/${pluginName}</gitHubRepo>
+        <pluginUrl>https://github.com/${gitHubRepo}</pluginUrl>
+
+        <jenkins.version>2.277.1</jenkins.version>
+        <java.level>8</java.level>
+    </properties>
 
     <!-- Add resource filtering to pass build time variables to runtime -->
     <build>
@@ -155,20 +199,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>https://opensource.org/licenses/MIT</url>
-        </license>
-    </licenses>
-
-    <scm>
-        <connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
-        <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
-        <url>https://github.com/${gitHubRepo}</url>
-        <tag>${scmTag}</tag>
-    </scm>
 
     <repositories>
         <repository>
