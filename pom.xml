@@ -10,7 +10,7 @@
 
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>opslevel</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>${revision}</version>
     <packaging>hpi</packaging>
 
     <name>OpsLevel Plugin</name>
@@ -57,7 +57,7 @@
     </issueManagement>
 
     <properties>
-        <revision>1.2.1</revision>
+        <revision>1.2.2</revision>
         <changelist>-SNAPSHOT</changelist>
 
         <pluginName>${project.artifactId}-plugin</pluginName>
