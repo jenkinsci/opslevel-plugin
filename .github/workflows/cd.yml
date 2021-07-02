@@ -30,9 +30,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check interesting categories
+        uses: jenkins-infra/interesting-category-action@v1.0.0
+        id: interesting-categories
+        if: steps.verify-ci-status.outputs.result == 'success'
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   release:
     runs-on: ubuntu-latest
     needs: [validate]
+    if: needs.validate.outputs.should_release == 'true'
     steps:
     - name: Check out
       uses: actions/checkout@v2.3.4
