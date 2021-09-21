@@ -83,7 +83,7 @@ public class PostBuildActionTest {
         Assert.assertTrue(payload.containsKey("deployed_at"));
         Assert.assertEquals(payload.getString("description"), "Jenkins Deploy #1");
         Assert.assertEquals(payload.getString("environment"), "Production");
-        Assert.assertEquals(payload.getString("service"), "jenkins:test0");
+        Assert.assertEquals(payload.getString("service"), "test0");
 
         server.shutdown();
     }
@@ -143,7 +143,7 @@ public class PostBuildActionTest {
         Assert.assertTrue(payload.containsKey("deployed_at"));
         Assert.assertEquals(payload.getString("description"), "Fix typo");
         Assert.assertEquals(payload.getString("environment"), "Production");
-        Assert.assertEquals(payload.getString("service"), "jenkins:test0");
+        Assert.assertEquals(payload.getString("service"), "test0");
         JsonObject commitJson = payload.getJsonObject("commit");
         Assert.assertEquals(commitJson.getString("sha"), "500ca67ed52a9ca20f3181e618347e61f86a0625");
         Assert.assertEquals(commitJson.getString("branch"), "origin/master");

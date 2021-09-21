@@ -227,7 +227,7 @@ public class JobListener extends RunListener<Run<?, ?>> {
         // Conform to kubernetes conventions with this prefix
         String serviceAlias = stringSub(opsLevelConfig.serviceAlias, env);
         if (serviceAlias.isEmpty()) {
-            serviceAlias = "jenkins:" + env.get("JOB_NAME");
+            serviceAlias = env.get("JOB_NAME");
         }
 
         // Details of who deployed, if available
