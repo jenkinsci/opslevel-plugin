@@ -18,6 +18,10 @@
       <f:textbox/>
     </f:entry>
 
+    <f:entry title="Service Alias Template" field="serviceAliasTemplate">
+      <f:textbox/>
+    </f:entry>
+
     <f:entry title="Projects to Ignore" field="ignoreList">
       <f:textbox />
     </f:entry>
