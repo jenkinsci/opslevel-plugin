@@ -87,7 +87,7 @@ mvn clean package
 
 ## Running Locally
 
-Clone this repo, install Java & Maven, and run:
+Clone this repo, install Java & Maven, run this, and open `http://localhost:8080/jenkins/` in your browser.
 ```
     env -i PATH=$PATH mvn hpi:run
 ```
