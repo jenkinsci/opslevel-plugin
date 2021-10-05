@@ -224,10 +224,14 @@ public class JobListener extends RunListener<Run<?, ?>> {
             environment = "Production";
         }
 
-        // Conform to kubernetes conventions with this prefix
+        // Use the serviceAlias if one was supplied in the per-job config. Otherwise, try to use global template.
+        // Otherwise, use the default ${JOB_NAME}
         String serviceAlias = stringSub(opsLevelConfig.serviceAlias, env);
         if (serviceAlias.isEmpty()) {
-            serviceAlias = env.get("JOB_NAME");
+            serviceAlias = stringSub(opsLevelConfig.serviceAliasTemplate, env);
+            if (serviceAlias.isEmpty()) {
+                serviceAlias = env.get("JOB_NAME");
+            }
         }
 
         // Details of who deployed, if available

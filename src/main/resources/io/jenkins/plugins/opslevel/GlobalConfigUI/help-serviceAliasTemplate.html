@@ -1,0 +1,17 @@
+<div>
+  A template string that we will use for each job to create the Service Alias.
+</div>
+<br />
+<div>
+  This field can be overridden at the job level by setting the 'Service Alias'.
+  If neither of these fields are set we will default to ${JOB_NAME}.
+  This will substitute in Environment variables present during the job.
+</div>
+<br />
+<div>
+  For example, if your build process injects a
+  variable called SERVICE_NAME, you could set this field to:
+  <code>
+    ${SERVICE_NAME}
+  </code>
+</div>

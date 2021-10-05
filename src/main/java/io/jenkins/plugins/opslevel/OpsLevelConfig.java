@@ -4,6 +4,7 @@ public class OpsLevelConfig {
     public boolean run;
     public String webhookUrl;
     public String serviceAlias;
+    public String serviceAliasTemplate;
     public String environment;
     public String description;
     public String deployUrl;
@@ -16,6 +17,7 @@ public class OpsLevelConfig {
         run = true;
         webhookUrl = "";
         serviceAlias = "";
+        serviceAliasTemplate = "";
         environment = "";
         description = "";
         deployUrl = "";
@@ -31,6 +33,7 @@ public class OpsLevelConfig {
                "run=" + run +
                ", webhookUrl='" + webhookUrl + '\'' +
                ", serviceAlias='" + serviceAlias + '\'' +
+               ", serviceAliasTemplate='" + serviceAliasTemplate + '\'' +
                ", environment='" + environment + '\'' +
                ", description='" + description + '\'' +
                ", deployUrl='" + deployUrl + '\'' +
@@ -50,6 +53,9 @@ public class OpsLevelConfig {
         }
         if (this.serviceAlias.isEmpty()) {
             this.serviceAlias = otherConfig.serviceAlias;
+        }
+        if (this.serviceAliasTemplate.isEmpty()) {
+            this.serviceAliasTemplate = otherConfig.serviceAliasTemplate;
         }
         if (this.environment.isEmpty()) {
             this.environment = otherConfig.environment;

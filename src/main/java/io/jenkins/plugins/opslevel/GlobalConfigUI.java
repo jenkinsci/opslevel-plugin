@@ -43,6 +43,10 @@ public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describabl
             return globalConfig.run;
         }
 
+        public String getServiceAliasTemplate() {
+            return globalConfig.serviceAliasTemplate;
+        }
+
         public String getWebhookUrl() {
             return globalConfig.webhookUrl;
         }
@@ -74,6 +78,11 @@ public class GlobalConfigUI extends RunListener<Run<?, ?>> implements Describabl
         @DataBoundSetter
         public void setRun(boolean run) {
             globalConfig.run = run;
+        }
+
+        @DataBoundSetter
+        public void setServiceAliasTemplate(String serviceAliasTemplate) {
+            globalConfig.serviceAliasTemplate = cleanupValue(serviceAliasTemplate);
         }
 
         @DataBoundSetter
