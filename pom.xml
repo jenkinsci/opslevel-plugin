@@ -57,7 +57,7 @@
     </issueManagement>
 
     <properties>
-        <revision>1.2.5</revision>
+        <revision>1.2.6</revision>
         <changelist>-SNAPSHOT</changelist>
 
         <pluginName>${project.artifactId}-plugin</pluginName>
